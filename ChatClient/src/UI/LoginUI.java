@@ -68,7 +68,7 @@ public class LoginUI extends JFrame implements ActionListener, Opcode
                     case SMSG_LOGIN_SUCCESS:
                         String name = String.format("%s", Main.m_session.readObject());
                         String psm = String.format("%s", Main.m_session.readObject());
-                        new FriendListUI(name, psm, this);
+                        new Thread(new FriendListUI(name, psm, this)).start();
                         break;
                     case SMSG_LOGIN_FAILED:
                         Main.m_session.destroy();

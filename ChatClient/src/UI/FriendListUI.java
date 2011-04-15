@@ -2,8 +2,9 @@ package UI;
 
 import javax.swing.*;
 import java.awt.event.*;
+import Core.*;
 
-public class FriendListUI extends JFrame
+public class FriendListUI extends JFrame implements Runnable, Opcode
 {
     JComboBox cStatus;
     JList friendList;
@@ -47,5 +48,33 @@ public class FriendListUI extends JFrame
         setResizable(false);
         setVisible(true);
         loginFrame.dispose();
+    }
+    
+    // Direct adding Contact instance, Contact.java toString() method show the correct contact detail instead of instance memory location.
+    public void run()
+    {
+        try
+        {
+            Main.m_session.writeByte(CMSG_GET_FRIEND_LIST);
+            Main.m_session.flush();
+            
+            byte b;
+            
+            while((b = Main.m_session.readByte()) == SMSG_FRIEND_DETAIL)
+            {
+                int guid = Main.m_session.readInt();
+                String cUsername = String.format("%s", Main.m_session.readObject());
+                String cTitle = String.format("%s", Main.m_session.readObject());
+                String cPSM = String.format("%s", Main.m_session.readObject());
+                
+                Contact c = new Contact(guid, cUsername, cTitle, cPSM);
+                
+                model.addElement(c);
+            }
+            
+            if (b != SMSG_FRIEND_LIST_ENDED)
+                JOptionPane.showMessageDialog(this, "Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
+        }
+        catch(Exception e){}
     }
 }

@@ -76,6 +76,15 @@ public class Session implements Opcode
         catch (Exception e) { return 0; }
     }
     
+    public int readInt()
+    {
+        try
+        {
+            return in.readInt();
+        }
+        catch (Exception e) { return 0; }
+    }
+    
     public Object readObject()
     {
         try

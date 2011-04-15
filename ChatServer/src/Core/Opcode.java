@@ -12,4 +12,6 @@ public interface Opcode
     final byte CMSG_REMOVE_FRIEND         = 0x08;
     final byte SMSG_FRIEND_OPCODE_SUCCESS = 0x09;
     final byte CMSG_STATUS_CHANGED        = 0x0A;
+    final byte SMSG_FRIEND_DETAIL         = 0x0B;
+    final byte SMSG_FRIEND_LIST_ENDED     = 0x0C;
 }
