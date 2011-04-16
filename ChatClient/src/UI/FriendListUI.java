@@ -3,6 +3,8 @@ package UI;
 import javax.swing.*;
 import java.awt.event.*;
 import Core.*;
+import java.util.ListIterator;
+import java.util.Vector;
 
 public class FriendListUI extends JFrame implements Runnable, Opcode
 {
@@ -17,6 +19,8 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
     DefaultListModel model;
     
     String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
+    
+    static Vector<ChatUI> chatWindow;
     
     public FriendListUI(String name, String psm, JFrame loginFrame)
     {
@@ -43,11 +47,15 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         friendListPane.setBounds(10, 100, 245, 360);
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(loginFrame);
+        setLocationRelativeTo(null);
         setSize(270, 500);
         setResizable(false);
         setVisible(true);
         loginFrame.dispose();
+        
+        chatWindow = new Vector<ChatUI>();
+        
+        friendList.addMouseListener(mouseListener);
     }
     
     // Direct adding Contact instance, Contact.java toString() method show the correct contact detail instead of instance memory location.
@@ -77,4 +85,30 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         }
         catch(Exception e){}
     }
+    
+    MouseListener mouseListener = new MouseAdapter()
+    {
+        public void mouseClicked(MouseEvent e)
+        {
+            if (e.getClickCount() == 2)
+            {
+                int index = friendList.locationToIndex(e.getPoint());
+                Contact c =(Contact)model.getElementAt(index);
+                
+                for (ListIterator<ChatUI> i = chatWindow.listIterator(); i.hasNext(); )
+                {
+                    ChatUI ui = i.next();
+                    
+                    if (ui.getContact().equals(c))
+                    {
+                        chatWindow.elementAt(index).toFront();
+                        chatWindow.elementAt(index).repaint();
+                        return;
+                    }
+                }
+                
+                chatWindow.add(new ChatUI(c));
+            }
+        }
+    };
 }
