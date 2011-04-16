@@ -1,2 +1,5 @@
 build
 *.class
+ChatClient.jar
+ChatServer.jar
+README.TXT
