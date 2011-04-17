@@ -14,4 +14,6 @@ public interface Opcode
     final byte CMSG_STATUS_CHANGED         = 0x0A;
     final byte SMSG_CONTACT_DETAIL         = 0x0B;
     final byte SMSG_CONTACT_LIST_ENDED     = 0x0C;
+    final byte CMSG_SEND_CHAT_MESSAGE      = 0x0D;
+    final byte SMSG_SEND_CHAT_MESSAGE      = 0x0E;
 }

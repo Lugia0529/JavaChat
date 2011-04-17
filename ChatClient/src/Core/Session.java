@@ -48,6 +48,15 @@ public class Session implements Opcode
         catch(Exception e) {}
     }
     
+    public void writeInt(int i)
+    {
+        try
+        {
+            out.writeInt(i);
+        }
+        catch(Exception e) {}
+    }
+    
     public void writeObject(Object o)
     {
         try

@@ -9,27 +9,33 @@ import Core.*;
 
 public class ContactListUI extends JFrame implements Runnable, Opcode
 {
-    JComboBox cStatus;
-    JList contactList;
-    JScrollPane contactListPane;
+    private JComboBox cStatus;
+    private JList contactList;
+    private JScrollPane contactListPane;
     
-    JLabel lblName;
-    JLabel lblPSM;
-    JLabel lblFList;
+    private JLabel lblName;
+    private JLabel lblPSM;
+    private JLabel lblFList;
     
-    DefaultListModel model;
+    private DefaultListModel model;
     
-    String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
+    private String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
+    
+    private String accountTitle;
+    private String accountPSM;
     
     static Vector<ChatUI> chatWindow;
     
-    public ContactListUI(String name, String psm, JFrame loginFrame)
+    public ContactListUI(String accountTitle, String accountPSM, JFrame loginFrame)
     {
-        setTitle(String.format("%s - %s", name, psm));
+        setTitle(String.format("%s - %s", accountTitle, accountPSM));
         setLayout(null);
         
-        lblName = new JLabel(name);
-        lblPSM = new JLabel(psm);
+        this.accountTitle = accountTitle;
+        this.accountPSM = accountPSM;
+        
+        lblName = new JLabel(accountTitle);
+        lblPSM = new JLabel(accountPSM);
         
         cStatus = new JComboBox(status);
         
@@ -84,6 +90,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
     {
         try
         {
+            //TODO: Can we separate socket receive thread to another file?
             Main.m_session.writeByte(CMSG_GET_CONTACT_LIST);
             Main.m_session.flush();
             
@@ -103,6 +110,59 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
             
             if (b != SMSG_CONTACT_LIST_ENDED)
                 JOptionPane.showMessageDialog(this, "Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
+            
+            while(true)
+            {
+                switch (Main.m_session.readByte())
+                {
+                    case SMSG_SEND_CHAT_MESSAGE:
+                        int sender = Main.m_session.readInt();
+                        String message = String.format("%s", Main.m_session.readObject());
+                        
+                        Contact s_contact = null;
+                        int index = 0;
+                        
+                        //TODO: Need optimize
+                        for (index = 0; index < model.getSize(); index++)
+                        {
+                            if (((Contact)model.elementAt(index)).getGuid() == sender)
+                            {
+                                s_contact = (Contact)model.elementAt(index);
+                                break;
+                            }
+                        }
+                        
+                        if (s_contact == null)
+                            break;
+                        
+                        ChatUI targetUI = null;
+                        
+                        for (ListIterator<ChatUI> i = chatWindow.listIterator(); i.hasNext(); )
+                        {
+                            ChatUI ui = i.next();
+                    
+                            if (ui.getContact().equals(s_contact))
+                            {
+                                chatWindow.elementAt(index).toFront();
+                                chatWindow.elementAt(index).repaint();
+                                targetUI = chatWindow.elementAt(index);
+                                break;
+                            }
+                        }
+                        
+                        if (targetUI == null)
+                        {
+                            targetUI = new ChatUI(s_contact, accountTitle);
+                            chatWindow.add(targetUI);
+                        }
+                        
+                        message = message.replaceAll("\n", "\n     ");
+                        targetUI.txtOutput.append(String.format("%s says:\n", s_contact.getTitle()));
+                        targetUI.txtOutput.append(String.format("     %s\n", message));
+                        
+                        break;
+                }
+            }
         }
         catch(Exception e){}
     }
@@ -160,7 +220,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                     }
                 }
                 
-                chatWindow.add(new ChatUI(c));
+                chatWindow.add(new ChatUI(c, accountTitle));
             }
         }
     };

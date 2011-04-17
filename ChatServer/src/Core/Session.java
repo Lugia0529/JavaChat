@@ -2,6 +2,7 @@ package Core;
 
 import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
+import java.util.ListIterator;
 
 public class Session implements Runnable, Opcode
 {
@@ -34,7 +35,7 @@ public class Session implements Runnable, Opcode
                 switch(b)
                 {
                     case CMSG_GET_CONTACT_LIST:
-                        System.out.printf("Opcode: CMSG_GET_CONTACT_LIST\n");
+                        System.out.printf("\nOpcode: CMSG_GET_CONTACT_LIST\n");
                         
                         ResultSet rs = Main.db.query("SELECT a.guid, a.username, a.title, a.psm FROM contact AS c LEFT JOIN account AS a ON c.c_guid = a.guid WHERE c.o_guid = %d", c.getGuid());
                         
@@ -50,7 +51,7 @@ public class Session implements Runnable, Opcode
                             System.out.printf("Send Contact: %s to client %d\n", rs.getString(2), c.getGuid());
                         }
                         
-                        System.out.print("Send Opcode: SMSG_CONTACT_LIST_ENDED");
+                        System.out.print("Send Opcode: SMSG_CONTACT_LIST_ENDED\n");
                         out.writeByte(SMSG_CONTACT_LIST_ENDED);
                         out.flush();
                         
@@ -58,7 +59,7 @@ public class Session implements Runnable, Opcode
                         
                         break;
                     case CMSG_LOGOUT:
-                        System.out.printf("Opcode: CMSG_LOGOUT\n");
+                        System.out.printf("\nOpcode: CMSG_LOGOUT\n");
                         
                         Main.clientList.remove(c);
                         
@@ -75,8 +76,32 @@ public class Session implements Runnable, Opcode
                         break;
                     case CMSG_REMOVE_CONTACT:
                         break;
+                    case CMSG_SEND_CHAT_MESSAGE:
+                        System.out.printf("\nOpcode: CMSG_SEND_CHAT_MESSAGE\n");
+                        
+                        int from = c.getGuid();
+                        int to = c.getInputStream().readInt();
+                        String message = String.format("%s", c.getInputStream().readObject());
+                        
+                        System.out.printf("Chat Message Receive From: %d, To %d, Message: %s\n", from, to, message);
+                        
+                        for (ListIterator<Client> i = Main.clientList.listIterator(); i.hasNext(); )
+                        {
+                            Client target = i.next();
+                            if (target.getGuid() == to)
+                            {
+                                target.getOutputStream().writeByte(SMSG_SEND_CHAT_MESSAGE);
+                                target.getOutputStream().writeInt(from);
+                                target.getOutputStream().writeObject(message);
+                                target.getOutputStream().flush();
+                                System.out.printf("Send message success\n");
+                                break;
+                            }
+                        }
+                        
+                        break;
                     default:
-                        System.out.printf("Unknown Opcode Receive");
+                        System.out.printf("Unknown Opcode Receive\n");
                         break;
                 }
             }

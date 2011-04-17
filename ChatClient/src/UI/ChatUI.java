@@ -5,9 +5,11 @@ import java.awt.event.*;
 
 import Core.*;
 
-public class ChatUI extends JFrame
+public class ChatUI extends JFrame implements Opcode
 {
     Contact c;
+    
+    String accountTitle;
     
     JScrollPane paneOutput;
     JScrollPane paneInput;
@@ -15,9 +17,10 @@ public class ChatUI extends JFrame
     JTextArea txtOutput;
     JTextArea txtInput;
     
-    public ChatUI(Contact c)
+    public ChatUI(Contact c, String accountTitle)
     {
         this.c = c;
+        this.accountTitle = accountTitle;
         
         setTitle(c.toString());
         setLayout(null);
@@ -43,7 +46,42 @@ public class ChatUI extends JFrame
         setVisible(true);
         
         addWindowListener(winListener);
+        txtInput.addKeyListener(keyListener);
     }
+    
+    KeyListener keyListener = new KeyAdapter()
+    {
+        public void keyReleased(KeyEvent e)
+        {
+            if (e.getKeyCode() == e.VK_ENTER)
+            {
+                if (e.isShiftDown())
+                {
+                    txtInput.append("\n");
+                    return;
+                }
+                
+                if (txtInput.getText().trim().equals(""))
+                {
+                    txtInput.setText("");
+                    return;
+                }
+                
+                Main.m_session.writeByte(CMSG_SEND_CHAT_MESSAGE);
+                Main.m_session.writeInt(c.getGuid());
+                Main.m_session.writeObject(txtInput.getText().trim());
+                Main.m_session.flush();
+                
+                String message = txtInput.getText().trim();
+                message = message.replaceAll("\n", "\n     ");
+                
+                txtOutput.append(String.format("%s says:\n", accountTitle));
+                txtOutput.append(String.format("     %s\n", message));
+                
+                txtInput.setText("");
+            }
+        }   
+    };
     
     WindowListener winListener = new WindowAdapter()
     {
