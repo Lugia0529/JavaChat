@@ -49,7 +49,7 @@ public class ChatUI extends JFrame
     {
         public void windowClosing(WindowEvent e) 
         {
-            FriendListUI.chatWindow.removeElement((ChatUI)e.getSource());
+            ContactListUI.chatWindow.removeElement((ChatUI)e.getSource());
         }
     };
     

@@ -33,14 +33,14 @@ public class Session implements Runnable, Opcode
                 
                 switch(b)
                 {
-                    case CMSG_GET_FRIEND_LIST:
-                        System.out.printf("Opcode: CMSG_GET_FRIEND_LIST\n");
+                    case CMSG_GET_CONTACT_LIST:
+                        System.out.printf("Opcode: CMSG_GET_CONTACT_LIST\n");
                         
-                        ResultSet rs = Main.db.query("SELECT a.guid, a.username, a.title, a.psm FROM friend AS c LEFT JOIN account AS a ON c.f_guid = a.guid WHERE c.o_guid = %d", c.getGuid());
+                        ResultSet rs = Main.db.query("SELECT a.guid, a.username, a.title, a.psm FROM contact AS c LEFT JOIN account AS a ON c.c_guid = a.guid WHERE c.o_guid = %d", c.getGuid());
                         
                         while(rs.next())
                         {
-                            out.writeByte(SMSG_FRIEND_DETAIL);
+                            out.writeByte(SMSG_CONTACT_DETAIL);
                             out.writeInt(rs.getInt(1));        //guid
                             out.writeObject(rs.getString(2));  //username
                             out.writeObject(rs.getString(3));  //title
@@ -50,10 +50,11 @@ public class Session implements Runnable, Opcode
                             System.out.printf("Send Contact: %s to client %d\n", rs.getString(2), c.getGuid());
                         }
                         
-                        out.writeByte(SMSG_FRIEND_LIST_ENDED);
+                        System.out.print("Send Opcode: SMSG_CONTACT_LIST_ENDED");
+                        out.writeByte(SMSG_CONTACT_LIST_ENDED);
                         out.flush();
                         
-                        System.out.printf("Send Friend: Finish\n");
+                        System.out.printf("Send contact: Finish\n");
                         
                         break;
                     case CMSG_LOGOUT:
@@ -63,13 +64,16 @@ public class Session implements Runnable, Opcode
                         
                         System.out.printf("Closing client socket %d.\n", c.getGuid());
                         c.getSocket().close();
+                        
                         Main.db.execute("UPDATE account SET online = 0 WHERE guid = %d", c.getGuid());
                         System.out.printf("Stopping session thread %d.\n", c.getGuid());
+                        
                         stop();
+                        
                         break;
-                    case CMSG_ADD_FRIEND:
+                    case CMSG_ADD_CONTACT:
                         break;
-                    case CMSG_REMOVE_FRIEND:
+                    case CMSG_REMOVE_CONTACT:
                         break;
                     default:
                         System.out.printf("Unknown Opcode Receive");

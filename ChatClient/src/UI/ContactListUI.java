@@ -7,11 +7,11 @@ import java.util.Vector;
 
 import Core.*;
 
-public class FriendListUI extends JFrame implements Runnable, Opcode
+public class ContactListUI extends JFrame implements Runnable, Opcode
 {
     JComboBox cStatus;
-    JList friendList;
-    JScrollPane friendListPane;
+    JList contactList;
+    JScrollPane contactListPane;
     
     JLabel lblName;
     JLabel lblPSM;
@@ -23,7 +23,7 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
     
     static Vector<ChatUI> chatWindow;
     
-    public FriendListUI(String name, String psm, JFrame loginFrame)
+    public ContactListUI(String name, String psm, JFrame loginFrame)
     {
         setTitle(String.format("%s - %s", name, psm));
         setLayout(null);
@@ -34,18 +34,18 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         cStatus = new JComboBox(status);
         
         model = new DefaultListModel();
-        friendList = new JList(model);
-        friendListPane = new JScrollPane(friendList);
+        contactList = new JList(model);
+        contactListPane = new JScrollPane(contactList);
         
         add(lblName);
         add(lblPSM);
         add(cStatus);
-        add(friendListPane);
+        add(contactListPane);
         
         lblName.setBounds(15, 10, 245, 25);
         lblPSM.setBounds(15, 35, 245, 25);
         cStatus.setBounds(10, 65, 245, 25);
-        friendListPane.setBounds(10, 100, 245, 360);
+        contactListPane.setBounds(10, 100, 245, 360);
         
         
         setSize(270, 500);
@@ -58,7 +58,7 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         chatWindow = new Vector<ChatUI>();
         
         addWindowListener(winListener);
-        friendList.addMouseListener(mouseListener);
+        contactList.addMouseListener(mouseListener);
         cStatus.addActionListener(actListener);
     }
     
@@ -84,12 +84,12 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
     {
         try
         {
-            Main.m_session.writeByte(CMSG_GET_FRIEND_LIST);
+            Main.m_session.writeByte(CMSG_GET_CONTACT_LIST);
             Main.m_session.flush();
             
             byte b;
             
-            while((b = Main.m_session.readByte()) == SMSG_FRIEND_DETAIL)
+            while((b = Main.m_session.readByte()) == SMSG_CONTACT_DETAIL)
             {
                 int guid = Main.m_session.readInt();
                 String cUsername = String.format("%s", Main.m_session.readObject());
@@ -101,7 +101,7 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
                 model.addElement(c);
             }
             
-            if (b != SMSG_FRIEND_LIST_ENDED)
+            if (b != SMSG_CONTACT_LIST_ENDED)
                 JOptionPane.showMessageDialog(this, "Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
         }
         catch(Exception e){}
@@ -145,7 +145,7 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         {
             if (e.getClickCount() == 2)
             {
-                int index = friendList.locationToIndex(e.getPoint());
+                int index = contactList.locationToIndex(e.getPoint());
                 Contact c =(Contact)model.getElementAt(index);
                 
                 for (ListIterator<ChatUI> i = chatWindow.listIterator(); i.hasNext(); )
