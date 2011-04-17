@@ -31,6 +31,11 @@ public class Main implements Opcode
         
         startupTime = System.currentTimeMillis();
         
+        //Update account database online status to 0 at startup
+        //some client may not record as logout in database if the server crash
+        System.out.printf("\nLogout all account\n");
+        db.execute("UPDATE account SET online = 0");
+        
         System.out.printf("\nSocket connection start.\n");
         
         Toolkit.getDefaultToolkit().beep();
@@ -55,10 +60,11 @@ public class Main implements Opcode
                             
                             c.setTitle(rs.getString(3));
                             c.setPSM(rs.getString(4));
+                            c.setSocket(connectionSocket);
                             c.setInputStream(in);
                             c.setOutputStream(new ObjectOutputStream(connectionSocket.getOutputStream()));
                             
-                            //db.execute("UPDATE account SET online=1 WHERE guid=%d", c.getGuid());
+                            db.execute("UPDATE account SET online = 1 WHERE guid = %d", c.getGuid());
                             
                             System.out.println("Send Opcode: SMSG_LOGIN_SUCESS");
                             c.getOutputStream().writeByte(SMSG_LOGIN_SUCCESS);

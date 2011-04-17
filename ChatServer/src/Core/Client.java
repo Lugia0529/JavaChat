@@ -2,6 +2,7 @@ package Core;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.Socket;
  
 public class Client
 {
@@ -9,6 +10,7 @@ public class Client
     private String username;
     private String title;
     private String psm;
+    private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     
@@ -26,6 +28,10 @@ public class Client
     public void setPSM(String psm)
     {
         this.psm = psm;
+    }
+    public void setSocket(Socket socket)
+    {
+        this.socket = socket;
     }
     
     public void setInputStream(ObjectInputStream in)
@@ -56,6 +62,11 @@ public class Client
     public String getPSM()
     {
         return this.psm;
+    }
+    
+    public Socket getSocket()
+    {
+        return this.socket;
     }
     
     public ObjectInputStream getInputStream()

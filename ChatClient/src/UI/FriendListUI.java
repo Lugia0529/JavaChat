@@ -51,13 +51,32 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         setSize(270, 500);
         setResizable(false);
         setLocationRelativeTo(loginFrame);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
         loginFrame.dispose();
         
         chatWindow = new Vector<ChatUI>();
         
+        addWindowListener(winListener);
         friendList.addMouseListener(mouseListener);
+        cStatus.addActionListener(actListener);
+    }
+    
+    public void exit()
+    {
+        Main.m_session.writeByte(CMSG_LOGOUT);
+        Main.m_session.flush();
+            
+        //close all existing ChatUI
+        for (ListIterator<ChatUI> i = chatWindow.listIterator(); i.hasNext(); )
+        {
+            ChatUI ui = i.next();
+            ui.dispose();
+        }
+            
+        chatWindow = null;
+        
+        System.exit(0);
     }
     
     // Direct adding Contact instance, Contact.java toString() method show the correct contact detail instead of instance memory location.
@@ -87,6 +106,38 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         }
         catch(Exception e){}
     }
+    
+    ActionListener actListener = new ActionListener() 
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            if (e.getSource().equals(cStatus))
+            {
+                switch (cStatus.getSelectedIndex())
+                {
+                    case 0:                /* Online */
+                        break;
+                    case 1:                /* Away */
+                        break;
+                    case 2:                /* Busy */
+                        break;
+                    case 3:                /* Appear Offline */
+                        break;
+                    case 4:                /* Logout */
+                        exit();
+                        break;
+                }
+            }
+        }
+    };
+    
+    WindowListener winListener = new WindowAdapter()
+    {
+        public void windowClosing(WindowEvent e) 
+        {
+            exit();
+        }
+    };
     
     MouseListener mouseListener = new MouseAdapter()
     {
