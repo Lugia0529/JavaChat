@@ -2,9 +2,10 @@ package UI;
 
 import javax.swing.*;
 import java.awt.event.*;
-import Core.*;
 import java.util.ListIterator;
 import java.util.Vector;
+
+import Core.*;
 
 public class FriendListUI extends JFrame implements Runnable, Opcode
 {
@@ -46,10 +47,11 @@ public class FriendListUI extends JFrame implements Runnable, Opcode
         cStatus.setBounds(10, 65, 245, 25);
         friendListPane.setBounds(10, 100, 245, 360);
         
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        
         setSize(270, 500);
         setResizable(false);
+        setLocationRelativeTo(loginFrame);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
         loginFrame.dispose();
         

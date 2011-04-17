@@ -2,6 +2,7 @@ package UI;
 
 import javax.swing.*;
 import java.awt.event.*;
+
 import Core.*;
 
 public class ChatUI extends JFrame
@@ -35,10 +36,10 @@ public class ChatUI extends JFrame
         
         txtOutput.setEditable(false);
         
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
         setSize(375, 450);
         setResizable(false);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
         
         addWindowListener(winListener);

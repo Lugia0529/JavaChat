@@ -1,6 +1,7 @@
 package Core;
 
 import javax.swing.JFrame;
+
 import UI.*;
 
 public class Main
@@ -12,10 +13,10 @@ public class Main
         m_session = new Session();
         
         LoginUI frame = new LoginUI();
-        frame.setSize(300,500);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
+        frame.setSize(270, 500);
         frame.setResizable(false);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
 }

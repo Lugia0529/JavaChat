@@ -2,6 +2,7 @@ package UI;
 
 import javax.swing.*;
 import java.awt.event.*;
+
 import Core.*;
 
 public class LoginUI extends JFrame implements ActionListener, Opcode
@@ -32,13 +33,13 @@ public class LoginUI extends JFrame implements ActionListener, Opcode
         add(btnReg);
         add(btnExit);
         
-        lblPassword.setBounds(30,250,100,25);
-        lblUsername.setBounds(30,180,100,25);
-        txtPassword.setBounds(30,270,220,25);
-        txtUsername.setBounds(30,200,220,25);
-        btnLogin.setBounds(90,300,100,25);
-        btnReg.setBounds(30,420,100,25);
-        btnExit.setBounds(150, 420, 100, 25);
+        lblPassword.setBounds(25, 250, 100, 25);
+        lblUsername.setBounds(25, 180, 100, 25);
+        txtPassword.setBounds(25, 270, 220, 25);
+        txtUsername.setBounds(25, 200, 220, 25);
+        btnLogin.setBounds(85,310, 100, 25);
+        btnReg.setBounds(30, 420, 100, 25);
+        btnExit.setBounds(140, 420, 100, 25);
         
         btnLogin.addActionListener(this);
         btnReg.addActionListener(this);
