@@ -148,9 +148,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                             
                             if (ui.getContact().equals(s_contact))
                             {
-                                chatWindow.elementAt(index).toFront();
-                                chatWindow.elementAt(index).repaint();
-                                targetUI = chatWindow.elementAt(index);
+                                targetUI = ui;
                                 break;
                             }
                         }
@@ -164,6 +162,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                         message = message.replaceAll("\n", "\n     ");
                         targetUI.txtOutput.append(String.format("%s says:\n", s_contact.getTitle()));
                         targetUI.txtOutput.append(String.format("     %s\n", message));
+                        targetUI.toFront();
                         break;
                     case SMSG_STATUS_CHANGED:
                         int fromGuid = Main.m_session.readInt();
@@ -231,8 +230,10 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                     
                     if (ui.getContact().equals(c))
                     {
-                        chatWindow.elementAt(index).toFront();
-                        chatWindow.elementAt(index).repaint();
+                        if (ui.getState() == JFrame.ICONIFIED)
+                            ui.setState(JFrame.NORMAL);
+                        
+                        ui.toFront();
                         return;
                     }
                 }
