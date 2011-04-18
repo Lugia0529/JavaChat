@@ -60,6 +60,7 @@ public class Main implements Opcode
                             
                             c.setTitle(rs.getString(3));
                             c.setPSM(rs.getString(4));
+                            c.setStatus(0);
                             c.setSocket(connectionSocket);
                             c.setInputStream(in);
                             c.setOutputStream(new ObjectOutputStream(connectionSocket.getOutputStream()));
@@ -75,6 +76,8 @@ public class Main implements Opcode
                             clientList.add(c);
                             
                             new Thread(new Session(c)).start();
+                            
+                            
                         }
                         else
                         {

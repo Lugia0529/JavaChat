@@ -41,12 +41,33 @@ public class Session implements Runnable, Opcode
                         
                         while(rs.next())
                         {
+                            int guid = rs.getInt(1);
+                            String username = rs.getString(2);
+                            String title = rs.getString(3);
+                            String psm = rs.getString(4);
+                            
+                            // initial client status as appear offline, if it is online, status will change on for loop checking below.
+                            int status = 3;
+                            
+                            for (ListIterator<Client> i = Main.clientList.listIterator(); i.hasNext(); )
+                            {
+                                Client target = i.next();
+                                
+                                if (target.getGuid() == rs.getInt(1))
+                                {
+                                    status = target.getStatus();
+                                    break;
+                                }
+                            }
+                            
                             out.writeByte(SMSG_CONTACT_DETAIL);
-                            out.writeInt(rs.getInt(1));        //guid
-                            out.writeObject(rs.getString(2));  //username
-                            out.writeObject(rs.getString(3));  //title
-                            out.writeObject(rs.getString(4));  //psm
+                            out.writeInt(guid);
+                            out.writeObject(username);
+                            out.writeObject(title);
+                            out.writeObject(psm);
+                            out.writeInt(status);
                             out.flush();
+                            
                             Thread.sleep(10);
                             System.out.printf("Send Contact: %s to client %d\n", rs.getString(2), c.getGuid());
                         }
@@ -70,6 +91,39 @@ public class Session implements Runnable, Opcode
                         System.out.printf("Stopping session thread %d.\n", c.getGuid());
                         
                         stop();
+                        
+                        break;
+                    case CMSG_STATUS_CHANGED:
+                        System.out.printf("\nOpcode: CMSG_STATUS_CHANGED\n");
+                        
+                        int toStatus = c.getInputStream().readInt();
+                        c.setStatus(toStatus);
+                        
+                        System.out.printf("Client %d change status to %d.\n" , c.getGuid(), toStatus);
+                        
+                        ResultSet crs = Main.db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
+                        
+                        while(crs.next())
+                        {
+                            int c_guid = crs.getInt(1);
+                            
+                            for (ListIterator<Client> i = Main.clientList.listIterator(); i.hasNext(); )
+                            {
+                                Client target = i.next();
+                                
+                                if (target.getGuid() == c_guid)
+                                {
+                                    System.out.printf("Send status change From: %d, To: %d, Status: %d\n", c.getGuid(), c_guid, toStatus);
+                                    target.getOutputStream().writeByte(SMSG_STATUS_CHANGED);
+                                    target.getOutputStream().writeInt(c.getGuid());
+                                    target.getOutputStream().writeInt(toStatus);
+                                    target.getOutputStream().flush();
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        System.out.printf("Client %d update status to %d: Finish.\n", c.getGuid(), toStatus);
                         
                         break;
                     case CMSG_ADD_CONTACT:

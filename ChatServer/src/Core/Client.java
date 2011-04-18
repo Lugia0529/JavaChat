@@ -10,6 +10,7 @@ public class Client
     private String username;
     private String title;
     private String psm;
+    private int status;
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -29,6 +30,12 @@ public class Client
     {
         this.psm = psm;
     }
+    
+    public void setStatus(int status)
+    {
+        this.status = status;
+    }
+    
     public void setSocket(Socket socket)
     {
         this.socket = socket;
@@ -62,6 +69,11 @@ public class Client
     public String getPSM()
     {
         return this.psm;
+    }
+    
+    public int getStatus()
+    {
+        return this.status;
     }
     
     public Socket getSocket()

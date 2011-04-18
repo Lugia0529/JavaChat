@@ -6,13 +6,15 @@ public class Contact
     private String username;
     private String title;
     private String psm;
+    private int status;
     
-    public Contact(int guid, String username, String title, String psm)
+    public Contact(int guid, String username, String title, String psm, int status)
     {
         this.guid = guid;
         this.username = username;
         this.title = title;
         this.psm = psm;
+        this.status = status;
     }
     
     public int getGuid()
@@ -35,6 +37,11 @@ public class Contact
         return this.psm;
     }
     
+    public int getStatus()
+    {
+        return this.status;
+    }
+    
     public void setTitle(String title)
     {
         this.title = title;
@@ -45,12 +52,40 @@ public class Contact
         this.psm = psm;
     }
     
+    public void setStatus(int status)
+    {
+        this.status = status;
+    }
+    
     // Overide toString() method, so the Contact list can show proper contact detail instead of instance memory location.
     public String toString()
     {
+        String str = "";
+        
+        switch (status)
+        {
+            case 0:
+                str += "<Online>";
+                break;
+            case 1:
+                str += "<Away>";
+                break;
+            case 2:
+                str += "<Busy>";
+                break;
+            case 3:
+                str += "<Offline>";
+                break;
+        }
+        
         if (title.isEmpty())
-            return this.username;
+            str += username;
         else
-            return String.format("%s - %s", this.title, this.psm);
+            str += title;
+        
+        if (!psm.isEmpty())
+            str += " - " + psm;
+        
+        return str;
     }
 }

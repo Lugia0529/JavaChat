@@ -15,7 +15,6 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
     
     private JLabel lblName;
     private JLabel lblPSM;
-    private JLabel lblFList;
     
     private DefaultListModel model;
     
@@ -68,8 +67,10 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
         cStatus.addActionListener(actListener);
     }
     
-    public void exit()
+    public void logout()
     {
+        Main.m_session.writeByte(CMSG_STATUS_CHANGED);
+        Main.m_session.writeInt(3);
         Main.m_session.writeByte(CMSG_LOGOUT);
         Main.m_session.flush();
             
@@ -99,17 +100,22 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
             while((b = Main.m_session.readByte()) == SMSG_CONTACT_DETAIL)
             {
                 int guid = Main.m_session.readInt();
-                String cUsername = String.format("%s", Main.m_session.readObject());
-                String cTitle = String.format("%s", Main.m_session.readObject());
-                String cPSM = String.format("%s", Main.m_session.readObject());
+                String c_username = String.format("%s", Main.m_session.readObject());
+                String c_title = String.format("%s", Main.m_session.readObject());
+                String c_psm = String.format("%s", Main.m_session.readObject());
+                int c_status = Main.m_session.readInt();
                 
-                Contact c = new Contact(guid, cUsername, cTitle, cPSM);
+                Contact c = new Contact(guid, c_username, c_title, c_psm, c_status);
                 
                 model.addElement(c);
             }
             
             if (b != SMSG_CONTACT_LIST_ENDED)
                 JOptionPane.showMessageDialog(this, "Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
+            
+            Main.m_session.writeByte(CMSG_STATUS_CHANGED);
+            Main.m_session.writeInt(0);
+            Main.m_session.flush();
             
             while(true)
             {
@@ -118,9 +124,8 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                     case SMSG_SEND_CHAT_MESSAGE:
                         int sender = Main.m_session.readInt();
                         String message = String.format("%s", Main.m_session.readObject());
-                        
                         Contact s_contact = null;
-                        int index = 0;
+                        int index;
                         
                         //TODO: Need optimize
                         for (index = 0; index < model.getSize(); index++)
@@ -140,7 +145,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                         for (ListIterator<ChatUI> i = chatWindow.listIterator(); i.hasNext(); )
                         {
                             ChatUI ui = i.next();
-                    
+                            
                             if (ui.getContact().equals(s_contact))
                             {
                                 chatWindow.elementAt(index).toFront();
@@ -159,6 +164,21 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                         message = message.replaceAll("\n", "\n     ");
                         targetUI.txtOutput.append(String.format("%s says:\n", s_contact.getTitle()));
                         targetUI.txtOutput.append(String.format("     %s\n", message));
+                        break;
+                    case SMSG_STATUS_CHANGED:
+                        int fromGuid = Main.m_session.readInt();
+                        int toStatus = Main.m_session.readInt();
+                        
+                        //TODO: Need optimize
+                        for (index = 0; index < model.getSize(); index++)
+                        {
+                            if (((Contact)model.elementAt(index)).getGuid() == fromGuid)
+                            {
+                                ((Contact)model.elementAt(index)).setStatus(toStatus);
+                                contactList.repaint();
+                                break;
+                            }
+                        }
                         
                         break;
                 }
@@ -175,17 +195,14 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
             {
                 switch (cStatus.getSelectedIndex())
                 {
-                    case 0:                /* Online */
+                    //Only logout have special handle, status change only inform server
+                    case 4:
+                        logout();
                         break;
-                    case 1:                /* Away */
-                        break;
-                    case 2:                /* Busy */
-                        break;
-                    case 3:                /* Appear Offline */
-                        break;
-                    case 4:                /* Logout */
-                        exit();
-                        break;
+                    default:
+                        Main.m_session.writeByte(CMSG_STATUS_CHANGED);
+                        Main.m_session.writeInt(cStatus.getSelectedIndex());
+                        Main.m_session.flush();
                 }
             }
         }
@@ -195,7 +212,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
     {
         public void windowClosing(WindowEvent e) 
         {
-            exit();
+            logout();
         }
     };
     
