@@ -74,14 +74,14 @@ public class LoginUI extends JFrame implements ActionListener, Opcode
                         break;
                     case SMSG_LOGIN_FAILED: /* Login failed */
                         Main.m_session.destroy();
-                        JOptionPane.showMessageDialog(this, "Invalid Username and Password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "The infomation you entered is not valid.", "Login Failed", JOptionPane.ERROR_MESSAGE);
                         break;
                     case SMSG_MULTI_LOGIN: /* Account is already login on other computer. */
                         Main.m_session.destroy();
-                        JOptionPane.showMessageDialog(this, "This account is logged in on other computer.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Your account is currently logged in on another computer. To log in here, please log out from the other computer.", "Login Failed", JOptionPane.ERROR_MESSAGE);
                         break;
                     default: /* Server problem? */
-                        JOptionPane.showMessageDialog(this, "Unknown error occur, please login again later.", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Unknown error occur, please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
                         break;
                 }
             }
