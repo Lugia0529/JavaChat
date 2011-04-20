@@ -62,25 +62,26 @@ public class LoginUI extends JFrame implements ActionListener, Opcode
                 return;
             }
             
+            /* TODO: Can we move login process to other files? */
             try
             {
                 switch(Main.m_session.login(txtUsername.getText(), new String(txtPassword.getPassword())))
                 {
-                    case SMSG_LOGIN_SUCCESS:
+                    case SMSG_LOGIN_SUCCESS: /* Login is success */
                         String name = String.format("%s", Main.m_session.readObject());
                         String psm = String.format("%s", Main.m_session.readObject());
                         new Thread(new ContactListUI(name, psm, this)).start();
                         break;
-                    case SMSG_LOGIN_FAILED:
+                    case SMSG_LOGIN_FAILED: /* Login failed */
                         Main.m_session.destroy();
                         JOptionPane.showMessageDialog(this, "Invalid Username and Password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
                         break;
-                    case SMSG_MULTI_LOGIN:
+                    case SMSG_MULTI_LOGIN: /* Account is already login on other computer. */
                         Main.m_session.destroy();
                         JOptionPane.showMessageDialog(this, "This account is logged in on other computer.", "Login Failed", JOptionPane.ERROR_MESSAGE);
                         break;
-                    default:
-                        System.out.println("Unknown Opcode Receive.");
+                    default: /* Server problem? */
+                        JOptionPane.showMessageDialog(this, "Unknown error occur, please login again later.", "Error", JOptionPane.ERROR_MESSAGE);
                         break;
                 }
             }

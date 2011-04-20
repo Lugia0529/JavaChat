@@ -53,20 +53,24 @@ public class ChatUI extends JFrame implements Opcode
     {
         public void keyReleased(KeyEvent e)
         {
+            // Only handle enter key in Chat Interface.
             if (e.getKeyCode() == e.VK_ENTER)
             {
+                // Shift + Enter mean next line.
                 if (e.isShiftDown())
                 {
                     txtInput.append("\n");
                     return;
                 }
                 
+                // Trim the message, cancel the message sending if message is empty.
                 if (txtInput.getText().trim().equals(""))
                 {
                     txtInput.setText("");
                     return;
                 }
                 
+                // Send the message to server.
                 Main.m_session.writeByte(CMSG_SEND_CHAT_MESSAGE);
                 Main.m_session.writeInt(c.getGuid());
                 Main.m_session.writeObject(txtInput.getText().trim());
@@ -75,9 +79,11 @@ public class ChatUI extends JFrame implements Opcode
                 String message = txtInput.getText().trim();
                 message = message.replaceAll("\n", "\n     ");
                 
+                // Output the message to Chat Interface too.
                 txtOutput.append(String.format("%s says:\n", accountTitle));
                 txtOutput.append(String.format("     %s\n", message));
                 
+                // Reset the input text area.
                 txtInput.setText("");
             }
         }   

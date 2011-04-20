@@ -58,6 +58,12 @@ public class Contact
     }
     
     // Overide toString() method, so the Contact list can show proper contact detail instead of instance memory location.
+    /* Possible combination
+     * <STATUS>USERNAME
+     * <STATUS>USERNAME - PSM
+     * <STATUS>TITLE
+     * <STATUS>TITLE - PSM
+     */
     public String toString()
     {
         String str = "";

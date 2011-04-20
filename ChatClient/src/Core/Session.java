@@ -24,14 +24,17 @@ public class Session implements Opcode
     {
         try
         {
+            // Connect to the server.
             socket = new Socket("127.0.0.1", 6769);
             out = new ObjectOutputStream(socket.getOutputStream());
             
+            // If connection is create succefully, send the login detail to the server.
             out.writeByte(CMSG_LOGIN);
             out.writeObject(username);
             out.writeObject(password);
             out.flush();
             
+            // Create input stream.
             in = new ObjectInputStream(socket.getInputStream());
             
             return in.readByte();
