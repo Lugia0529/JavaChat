@@ -1,5 +1,7 @@
 build
 *.class
-ChatClient.jar
-ChatServer.jar
 README.TXT
+/ChatServer/dist/
+/ChatClient/dist/
+/ChatServer/nbproject/private/
+/ChatClient/nbproject/private/
