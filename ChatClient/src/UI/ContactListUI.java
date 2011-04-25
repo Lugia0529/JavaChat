@@ -16,6 +16,9 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
     private JLabel lblName;
     private JLabel lblPSM;
     
+    private JButton btnAddContact;
+    private JButton btnRemoveContact;
+    
     private DefaultListModel model;
     
     private String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
@@ -38,6 +41,9 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
         
         cStatus = new JComboBox(status);
         
+        btnAddContact = new JButton("Add Contact");
+        btnRemoveContact = new JButton("Remove Contact");
+        
         model = new DefaultListModel();
         contactList = new JList(model);
         contactListPane = new JScrollPane(contactList);
@@ -45,19 +51,23 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
         add(lblName);
         add(lblPSM);
         add(cStatus);
+        add(btnAddContact);
+        add(btnRemoveContact);
         add(contactListPane);
         
         lblName.setBounds(15, 10, 245, 25);
         lblPSM.setBounds(15, 35, 245, 25);
         cStatus.setBounds(10, 65, 245, 25);
-        contactListPane.setBounds(10, 100, 245, 360);
-        
+        btnAddContact.setBounds(10, 100, 120, 25);
+        btnRemoveContact.setBounds(135, 100, 120, 25);
+        contactListPane.setBounds(10, 130, 245, 330);
         
         setSize(270, 500);
         setResizable(false);
         setLocationRelativeTo(loginFrame);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
+        
         loginFrame.dispose();
         
         chatWindow = new Vector<ChatUI>();
@@ -65,6 +75,8 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
         addWindowListener(winListener);
         contactList.addMouseListener(mouseListener);
         cStatus.addActionListener(actListener);
+        btnAddContact.addActionListener(actListener);
+        btnRemoveContact.addActionListener(actListener);
     }
     
     public void logout()
@@ -197,6 +209,30 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                         }
                         
                         break;
+                    case SMSG_CONTACT_ALREADY_IN_LIST:
+                        JOptionPane.showMessageDialog(null, "The contact is already in list.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
+                        break;
+                    case SMSG_CONTACT_NOT_FOUND:
+                        JOptionPane.showMessageDialog(null, "No such user found.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
+                        break;
+                    case SMSG_ADD_CONTACT_SUCCESS:
+                        int guid = Main.m_session.readInt();
+                        String username = String.format("%s", Main.m_session.readObject());
+                        String title = String.format("%s", Main.m_session.readObject());
+                        String psm = String.format("%s", Main.m_session.readObject());
+                        int c_status = Main.m_session.readInt();
+                        
+                        Contact c = new Contact(guid, username, title, psm, c_status);
+                        model.addElement(c);
+                        
+                        break;
+                    case SMSG_CONTACT_REQUEST:
+                        int r_guid = Main.m_session.readInt();
+                        String r_username = String.format("%s", Main.m_session.readObject());
+                        
+                        new ContactRequestUI(r_guid, r_username);
+                        
+                        break;
                 }
             }
         }
@@ -207,6 +243,30 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
     {
         public void actionPerformed(ActionEvent e)
         {
+            if (e.getSource().equals(btnAddContact))
+                new AddContactUI();
+            
+            if (e.getSource().equals(btnRemoveContact))
+            {
+                if (contactList.getSelectedIndex() > -1)
+                {
+                    if (JOptionPane.showConfirmDialog(null, "Do you want to remove this contact?", "Remove Contact", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
+                        return;
+                    
+                    int guid = ((Contact)model.getElementAt(contactList.getSelectedIndex())).getGuid();
+                    
+                    Main.m_session.writeByte(CMSG_REMOVE_CONTACT);
+                    Main.m_session.writeInt(guid);
+                    Main.m_session.flush();
+                    
+                    model.removeElementAt(contactList.getSelectedIndex());
+                    
+                    contactList.repaint();
+                }
+                else
+                    JOptionPane.showMessageDialog(null, "No contact is selected!", "Remove Contact", JOptionPane.ERROR_MESSAGE);
+            }
+            
             if (e.getSource().equals(cStatus))
             {
                 switch (cStatus.getSelectedIndex())
@@ -219,6 +279,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
                         Main.m_session.writeByte(CMSG_STATUS_CHANGED);
                         Main.m_session.writeInt(cStatus.getSelectedIndex());
                         Main.m_session.flush();
+                        break;
                 }
             }
         }
