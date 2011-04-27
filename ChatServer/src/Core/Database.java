@@ -1,6 +1,9 @@
 package Core;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 public class Database
 {
@@ -20,7 +23,6 @@ public class Database
         }
         catch (Exception e)
         {
-            e.printStackTrace();
             System.out.printf("Database Connection Fail\n");
         }
     }

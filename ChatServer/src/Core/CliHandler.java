@@ -1,6 +1,7 @@
 package Core;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class CliHandler implements Runnable
 {
@@ -32,7 +33,7 @@ public class CliHandler implements Runnable
                 if (command.equals("uptime"))
                     System.out.printf("Server Uptime: %dsec.\n", (System.currentTimeMillis() - Main.startupTime) / 1000);
                 else if (command.equals("clist"))
-                    System.out.printf("Current Client List Size: %d\n",Main.clientList.size());
+                    System.out.printf("Current Client List Size: %d\n", Main.clientList.size());
                 else
                     System.out.printf("Unknown Command: %s\n", command);
             }

@@ -1,14 +1,15 @@
 package Core;
 
 import java.awt.Toolkit;
-import java.util.*;
-import java.io.*;
-import java.net.*;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.sql.ResultSet;
 
 public class Main implements Opcode
 {
-    public static Vector<Client> clientList;
+    public static ClientList clientList;
     public static ServerSocket serverSocket;
     public static Socket connectionSocket;
     public static Database db;
@@ -16,7 +17,7 @@ public class Main implements Opcode
     
     public static void main(String[] args) throws Exception
     {
-        clientList = new Vector<Client>();
+        clientList = new ClientList();
         
         System.out.printf("Lugia Chat Server Beta\n\n");
         
@@ -61,23 +62,17 @@ public class Main implements Opcode
                             c.setTitle(rs.getString(3));
                             c.setPSM(rs.getString(4));
                             c.setStatus(0);
-                            c.setSocket(connectionSocket);
-                            c.setInputStream(in);
-                            c.setOutputStream(new ObjectOutputStream(connectionSocket.getOutputStream()));
+                            c.createSession(connectionSocket, in, new ObjectOutputStream(connectionSocket.getOutputStream()));
                             
                             db.execute("UPDATE account SET online = 1 WHERE guid = %d", c.getGuid());
                             
                             System.out.printf("Send Opcode: SMSG_LOGIN_SUCESS\n");
-                            c.getOutputStream().writeByte(SMSG_LOGIN_SUCCESS);
-                            c.getOutputStream().writeObject(c.getTitle());
-                            c.getOutputStream().writeObject(c.getPSM());
-                            c.getOutputStream().flush();
+                            c.getSession().getOutputStream().writeByte(SMSG_LOGIN_SUCCESS);
+                            c.getSession().getOutputStream().writeObject(c.getTitle());
+                            c.getSession().getOutputStream().writeObject(c.getPSM());
+                            c.getSession().getOutputStream().flush();
                             
                             clientList.add(c);
-                            
-                            new Thread(new Session(c)).start();
-                            
-                            
                         }
                         else
                         {

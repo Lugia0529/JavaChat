@@ -1,9 +1,10 @@
 package Core;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
- 
+
 public class Client
 {
     private int guid;
@@ -12,13 +13,19 @@ public class Client
     private String psm;
     private int status;
     private Socket socket;
-    private ObjectInputStream in;
-    private ObjectOutputStream out;
+    private Session session;
     
     public Client(int guid, String username)
     {
         this.guid = guid;
         this.username = username;
+    }
+    
+    public void createSession(Socket socket, ObjectInputStream in, ObjectOutputStream out) throws IOException
+    {
+        this.session = new Session(this, in, out);
+        this.socket = socket;
+        new Thread(session).start();
     }
     
     public void setTitle(String title)
@@ -34,21 +41,6 @@ public class Client
     public void setStatus(int status)
     {
         this.status = status;
-    }
-    
-    public void setSocket(Socket socket)
-    {
-        this.socket = socket;
-    }
-    
-    public void setInputStream(ObjectInputStream in)
-    {
-        this.in = in;
-    }
-    
-    public void setOutputStream(ObjectOutputStream out)
-    {
-        this.out = out;
     }
     
     public int getGuid()
@@ -81,13 +73,8 @@ public class Client
         return this.socket;
     }
     
-    public ObjectInputStream getInputStream()
+    public Session getSession()
     {
-        return this.in;
-    }
-    
-    public ObjectOutputStream getOutputStream()
-    {
-        return this.out;
+        return this.session;
     }
 }
