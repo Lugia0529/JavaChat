@@ -339,7 +339,7 @@ public class Session implements Runnable, Opcode
         
         Client target = Main.clientList.findClient(to);
         
-        if (target.getGuid() == to)
+        if (target != null)
         {
             target.getSession().getOutputStream().writeByte(SMSG_SEND_CHAT_MESSAGE);
             target.getSession().getOutputStream().writeInt(from);
@@ -347,6 +347,8 @@ public class Session implements Runnable, Opcode
             target.getSession().getOutputStream().flush();
             System.out.printf("Send message success\n");
         }
+        else
+            System.out.printf("Send Chat Message Cancel: Client %d is currently offline.\n", to);
     }
     
     void SendStatusChanged(int guid, int status) throws Exception
