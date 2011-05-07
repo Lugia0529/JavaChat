@@ -1,11 +1,18 @@
 package UI;
 
-import javax.swing.*;
-import java.awt.event.*;
+import Core.NetworkManager;
+import Core.Opcode;
+import Core.UIManager;
 
-import Core.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 
-public class ContactRequestUI extends JFrame implements Opcode, ActionListener
+public class ContactRequestUI extends JFrame implements Opcode
 {
     ButtonGroup grpSelection;
     
@@ -24,7 +31,7 @@ public class ContactRequestUI extends JFrame implements Opcode, ActionListener
     {
         this.guid = guid;
         
-        setTitle("Add New Contact");
+        setTitle("Contact Request");
         setLayout(null);
         
         lblContent = new JLabel(String.format("%s has added you to his/her contact list.", username));
@@ -56,25 +63,28 @@ public class ContactRequestUI extends JFrame implements Opcode, ActionListener
         
         rbAllow.setSelected(true);
         
-        btnOk.addActionListener(this);
-        btnLater.addActionListener(this);
+        btnOk.addActionListener(actListener);
+        btnLater.addActionListener(actListener);
         
         setSize(500, 200);
         setResizable(false);
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(UIManager.getMasterUI());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
     }
     
-    public void actionPerformed(ActionEvent e)
+    ActionListener actListener = new ActionListener()
     {
-        if (e.getSource().equals(btnOk))
+        public void actionPerformed(ActionEvent e)
         {
-            Main.m_session.writeByte(rbAllow.isSelected() ?  CMSG_CONTACT_ACCEPT : CMSG_CONTACT_DECLINE);
-            Main.m_session.writeInt(guid);
-            Main.m_session.flush(); 
+            if (e.getSource().equals(btnOk))
+            {
+                NetworkManager.writeByte(rbAllow.isSelected() ?  CMSG_CONTACT_ACCEPT : CMSG_CONTACT_DECLINE);
+                NetworkManager.writeInt(guid);
+                NetworkManager.flush(); 
+            }
+
+            dispose();
         }
-        
-        dispose();
-    }
+    };
 }

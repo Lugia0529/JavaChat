@@ -1,11 +1,21 @@
 package UI;
 
-import javax.swing.*;
-import java.awt.event.*;
+import Core.Contact;
+import Core.NetworkManager;
+import Core.Opcode;
+import Core.UIManager;
 
-import Core.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
-public class ChatUI extends JFrame implements Opcode
+public final class ChatUI extends JFrame implements Opcode
 {
     Contact c;
     
@@ -22,7 +32,8 @@ public class ChatUI extends JFrame implements Opcode
         this.c = c;
         this.accountTitle = accountTitle;
         
-        setTitle(c.toString());
+        UpdateTitle();
+        
         setLayout(null);
         
         txtOutput = new JTextArea();
@@ -49,6 +60,28 @@ public class ChatUI extends JFrame implements Opcode
         txtInput.addKeyListener(keyListener);
     }
     
+    public void append(String title, String message)
+    {
+        message = message.replaceAll("\n", "\n     ");
+        txtOutput.append(String.format("%s says:\n", title));
+        txtOutput.append(String.format("     %s\n", message));
+    }
+    
+    public Contact getContact()
+    {
+        return this.c;
+    }
+    
+    public void UpdateTitle()
+    {
+        setTitle(c.toString());
+    }
+    
+    public void close()
+    {
+        UIManager.getChatUIList().remove(this);
+    }
+    
     KeyListener keyListener = new KeyAdapter()
     {
         public void keyReleased(KeyEvent e)
@@ -71,10 +104,10 @@ public class ChatUI extends JFrame implements Opcode
                 }
                 
                 // Send the message to server.
-                Main.m_session.writeByte(CMSG_SEND_CHAT_MESSAGE);
-                Main.m_session.writeInt(c.getGuid());
-                Main.m_session.writeObject(txtInput.getText().trim());
-                Main.m_session.flush();
+                NetworkManager.writeByte(CMSG_SEND_CHAT_MESSAGE);
+                NetworkManager.writeInt(c.getGuid());
+                NetworkManager.writeObject(txtInput.getText().trim());
+                NetworkManager.flush();
                 
                 String message = txtInput.getText().trim();
                 message = message.replaceAll("\n", "\n     ");
@@ -93,12 +126,7 @@ public class ChatUI extends JFrame implements Opcode
     {
         public void windowClosing(WindowEvent e) 
         {
-            ContactListUI.chatWindow.removeElement((ChatUI)e.getSource());
+            close();
         }
     };
-    
-    public Contact getContact()
-    {
-        return this.c;
-    }
 }

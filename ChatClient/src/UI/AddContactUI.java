@@ -1,12 +1,21 @@
 package UI;
 
-import javax.swing.*;
-import java.awt.event.*;
+import Core.NetworkManager;
+import Core.Opcode;
+import Core.UIManager;
 
-import Core.*;
-import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 
-public class AddContactUI extends JFrame implements Opcode, ActionListener
+public class AddContactUI extends JFrame implements Opcode
 {
     JLabel lblUsername;
     
@@ -35,35 +44,52 @@ public class AddContactUI extends JFrame implements Opcode, ActionListener
         add(btnOK);
         add(btnCancel);
         
-        btnOK.addActionListener(this);
-        btnCancel.addActionListener(this);
+        btnOK.addActionListener(actListener);
+        btnCancel.addActionListener(actListener);
+        
+        txtUsername.addKeyListener(keyListener);
         
         setSize(300, 170);
         setResizable(false);
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(UIManager.getMasterUI());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
     }
-
-    public void actionPerformed(ActionEvent e) 
+    
+    public void submitData()
     {
-        if (e.getSource().equals(btnOK))
-        {
-            String username = txtUsername.getText().trim();
-            
-            if (!username.equals(""))
-            {
-                Main.m_session.writeByte(CMSG_ADD_CONTACT);
-                Main.m_session.writeObject(username);
-                Main.m_session.flush();
-                
-                dispose();
-            }
-            else
-                JOptionPane.showMessageDialog(this, "Please enter a valid username.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        String username = txtUsername.getText().trim();
         
-        if (e.getSource().equals(btnCancel))
+        if (!username.equals(""))
+        {
+            NetworkManager.writeByte(CMSG_ADD_CONTACT);
+            NetworkManager.writeObject(username);
+            NetworkManager.flush();
+            
             dispose();
+        }
+        else
+            JOptionPane.showMessageDialog(null, "Please enter a valid username.", "Error", JOptionPane.ERROR_MESSAGE);
     }
+    
+    ActionListener actListener = new ActionListener()
+    {
+        public void actionPerformed(ActionEvent e) 
+        {
+            if (e.getSource().equals(btnOK))
+                submitData();
+        
+            if (e.getSource().equals(btnCancel))
+                dispose();
+        }
+    };
+    
+    KeyListener keyListener = new KeyAdapter()
+    {
+        public void keyReleased(KeyEvent e)
+        {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                submitData();
+        }   
+    };
 }
