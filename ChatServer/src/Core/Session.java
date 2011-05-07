@@ -145,6 +145,16 @@ public class Session implements Runnable, Opcode
         Main.db.execute("UPDATE account SET online = 0 WHERE guid = %d", c.getGuid());
         System.out.printf("Stopping session thread %d.\n", c.getGuid());
         
+        ResultSet rs = Main.db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
+        
+        while(rs.next())
+        {
+            Client target = Main.clientList.findClient(rs.getInt(1));
+        
+            if (target != null)
+                target.getSession().SendStatusChanged(c.getGuid(), 3);
+        }
+        
         stop();               
     }
     
