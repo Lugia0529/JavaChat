@@ -2,6 +2,7 @@ package UI;
 
 import Core.NetworkManager;
 import Core.Opcode;
+import Core.Packet;
 import Core.UIManager;
 
 import java.awt.event.ActionEvent;
@@ -62,9 +63,10 @@ public class AddContactUI extends JFrame implements Opcode
         
         if (!username.equals(""))
         {
-            NetworkManager.writeByte(CMSG_ADD_CONTACT);
-            NetworkManager.writeObject(username);
-            NetworkManager.flush();
+            Packet p = new Packet(CMSG_ADD_CONTACT);
+            p.put(username);
+            
+            NetworkManager.SendPacket(p);
             
             dispose();
         }

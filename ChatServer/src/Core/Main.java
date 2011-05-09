@@ -47,11 +47,17 @@ public class Main implements Opcode
             
             ObjectInputStream in = new ObjectInputStream(connectionSocket.getInputStream());
             
-            switch(in.readByte())
+            Packet loginPacket = (Packet)in.readObject();
+            
+            switch(loginPacket.getOpcode())
             {
                 case CMSG_LOGIN:
                     System.out.printf("Opcode: CMSG_LOGIN\n");
-                    ResultSet rs = db.query("Select guid, username, title, psm, online from account where username='%s' and password='%s'", in.readObject(), in.readObject());
+                    
+                    String username = (String)loginPacket.get();
+                    String password = (String)loginPacket.get();
+                    
+                    ResultSet rs = db.query("Select guid, username, title, psm, online from account where username='%s' and password='%s'", username, password);
                     
                     if (rs.first())
                     {
@@ -67,10 +73,11 @@ public class Main implements Opcode
                             db.execute("UPDATE account SET online = 1 WHERE guid = %d", c.getGuid());
                             
                             System.out.printf("Send Opcode: SMSG_LOGIN_SUCESS\n");
-                            c.getSession().getOutputStream().writeByte(SMSG_LOGIN_SUCCESS);
-                            c.getSession().getOutputStream().writeObject(c.getTitle());
-                            c.getSession().getOutputStream().writeObject(c.getPSM());
-                            c.getSession().getOutputStream().flush();
+                            Packet p = new Packet(SMSG_LOGIN_SUCCESS);
+                            p.put(c.getTitle());
+                            p.put(c.getPSM());
+                            
+                            c.getSession().SendPacket(p);
                             
                             clientList.add(c);
                         }
@@ -78,7 +85,7 @@ public class Main implements Opcode
                         {
                             System.out.println("Send Opcode: SMSG_MULTI_LOGIN\n");
                             ObjectOutputStream out = new ObjectOutputStream(connectionSocket.getOutputStream());
-                            out.writeByte(SMSG_MULTI_LOGIN);
+                            out.writeObject(new Packet(SMSG_MULTI_LOGIN));
                             out.close();
                         }
                     }
@@ -86,15 +93,15 @@ public class Main implements Opcode
                     {
                        System.out.printf("Send Opcode: SMSG_LOGIN_FAILED\n");
                        ObjectOutputStream out = new ObjectOutputStream(connectionSocket.getOutputStream());
-                       out.writeByte(SMSG_LOGIN_FAILED);
+                       out.writeObject(new Packet(SMSG_LOGIN_FAILED));
                        out.close();
                     }
                     
                     rs = null;
                     break;
-               default:
-                   System.out.println("Unknow Opcode Receive");
-                   break;
+                default:
+                    System.out.printf("\nInvalid Opcode Receive: 0x%02X\n", loginPacket.getOpcode());
+                    break;
             }
         }
     }

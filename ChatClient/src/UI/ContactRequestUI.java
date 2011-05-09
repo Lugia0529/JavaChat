@@ -2,6 +2,7 @@ package UI;
 
 import Core.NetworkManager;
 import Core.Opcode;
+import Core.Packet;
 import Core.UIManager;
 
 import java.awt.event.ActionEvent;
@@ -79,9 +80,10 @@ public class ContactRequestUI extends JFrame implements Opcode
         {
             if (e.getSource().equals(btnOk))
             {
-                NetworkManager.writeByte(rbAllow.isSelected() ?  CMSG_CONTACT_ACCEPT : CMSG_CONTACT_DECLINE);
-                NetworkManager.writeInt(guid);
-                NetworkManager.flush(); 
+                Packet p = new Packet(rbAllow.isSelected() ?  CMSG_CONTACT_ACCEPT : CMSG_CONTACT_DECLINE);
+                p.put(guid);
+                
+                NetworkManager.SendPacket(p); 
             }
 
             dispose();

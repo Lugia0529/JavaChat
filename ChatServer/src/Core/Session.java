@@ -24,14 +24,15 @@ public class Session implements Runnable, Opcode
         session = null;
     }
     
-    public ObjectInputStream getInputStream()
+    public Packet ReceivePacket() throws Exception
     {
-        return this.in;
+        return (Packet)in.readObject();
     }
     
-    public ObjectOutputStream getOutputStream()
+    public void SendPacket(Packet p) throws Exception
     {
-        return this.out;
+        out.writeObject(p);
+        out.flush();
     }
     
     public void run()
@@ -42,9 +43,9 @@ public class Session implements Runnable, Opcode
             
             while(session == Thread.currentThread())
             {
-                byte b = in.readByte();
+                Packet p = ReceivePacket();
                 
-                switch(b)
+                switch(p.getOpcode())
                 {
                     case CMSG_GET_CONTACT_LIST:
                         HandleGetContactListOpcode();
@@ -53,25 +54,25 @@ public class Session implements Runnable, Opcode
                         HandleLogoutOpcode();
                         break;
                     case CMSG_STATUS_CHANGED:
-                        HandleStatusChangedOpcode();
+                        HandleStatusChangedOpcode(p);
                         break;
                     case CMSG_ADD_CONTACT:
-                        HandleAddContactOpcode();
+                        HandleAddContactOpcode(p);
                         break;
                     case CMSG_CONTACT_ACCEPT:
-                        HandleContactAcceptOpcode();
+                        HandleContactAcceptOpcode(p);
                         break;
                     case CMSG_CONTACT_DECLINE:
-                        HandleContactDeclineOpcode();
+                        HandleContactDeclineOpcode(p);
                         break;
                     case CMSG_REMOVE_CONTACT:
-                        HandleRemoveContactOpcode();
+                        HandleRemoveContactOpcode(p);
                         break;
                     case CMSG_SEND_CHAT_MESSAGE:
-                        HandleChatMessageOpcode();
+                        HandleChatMessageOpcode(p);
                         break;
                     default:
-                        System.out.printf("Unknown Opcode Receive\n");
+                        System.out.printf("\nUnknown Opcode Receive: 0x%02X\n", p.getOpcode());
                         break;
                 }
             }
@@ -84,11 +85,13 @@ public class Session implements Runnable, Opcode
         catch(Exception e){}
     }
     
-    void HandleGetContactListOpcode() throws Exception
+    void HandleGetContactListOpcode(/* Packet packet */) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_GET_CONTACT_LIST\n");
         
         ResultSet rs = Main.db.query("SELECT a.guid, a.username, a.title, a.psm FROM contact AS c LEFT JOIN account AS a ON c.c_guid = a.guid WHERE c.o_guid = %d", c.getGuid());
+        
+        Packet p;
         
         while(rs.next())
         {
@@ -101,21 +104,23 @@ public class Session implements Runnable, Opcode
             
             int status = target != null ? target.getStatus() : 3;
             
-            out.writeByte(SMSG_CONTACT_DETAIL);
-            out.writeInt(guid);
-            out.writeObject(username);
-            out.writeObject(title);
-            out.writeObject(psm);
-            out.writeInt(status);
-            out.flush();
+            p = new Packet(SMSG_CONTACT_DETAIL);
+            p.put(guid);
+            p.put(username);
+            p.put(title);
+            p.put(psm);
+            p.put(status);
+            
+            SendPacket(p);
+            
+            System.out.printf("Send Contact: %s to client %d\n", rs.getString(2), c.getGuid());
             
             Thread.sleep(10);
-            System.out.printf("Send Contact: %s to client %d\n", rs.getString(2), c.getGuid());
         }
         
         System.out.print("Send Opcode: SMSG_CONTACT_LIST_ENDED\n");
-        out.writeByte(SMSG_CONTACT_LIST_ENDED);
-        out.flush();
+        
+        SendPacket(new Packet(SMSG_CONTACT_LIST_ENDED));
         
         System.out.printf("Send contact: Finish\n");
         
@@ -126,14 +131,18 @@ public class Session implements Runnable, Opcode
         while (requestRS.next())
         {
             System.out.printf("Send Contact Request: %s to client %d\n", requestRS.getString(2), c.getGuid());
-            out.writeByte(SMSG_CONTACT_REQUEST);
-            out.writeInt(requestRS.getInt(1));
-            out.writeObject(requestRS.getString(2));
-            out.flush();
+            
+            p = new Packet(SMSG_CONTACT_REQUEST);
+            p.put(requestRS.getInt(1));
+            p.put(requestRS.getString(2));
+            
+            SendPacket(p);
+            
+            Thread.sleep(10);
         }                
     }
     
-    void HandleLogoutOpcode() throws Exception
+    void HandleLogoutOpcode(/* Packet packet */) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_LOGOUT\n");
         
@@ -158,11 +167,12 @@ public class Session implements Runnable, Opcode
         stop();               
     }
     
-    void HandleStatusChangedOpcode() throws Exception
+    void HandleStatusChangedOpcode(Packet packet) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_STATUS_CHANGED\n");
         
-        int toStatus = in.readInt();
+        int toStatus = (int)packet.get();
+        
         c.setStatus(toStatus);
         
         System.out.printf("Client %d change status to %d.\n" , c.getGuid(), toStatus);
@@ -180,11 +190,11 @@ public class Session implements Runnable, Opcode
         System.out.printf("Client %d update status to %d: Finish.\n", c.getGuid(), toStatus);
     }
     
-    void HandleAddContactOpcode() throws Exception
+    void HandleAddContactOpcode(Packet packet) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_ADD_CONTACT\n");
         
-        String username = String.format("%s", in.readObject());
+        String username = (String)packet.get();
         
         // Contact to add is self
         if (c.getUsername().equalsIgnoreCase(username))
@@ -193,13 +203,14 @@ public class Session implements Runnable, Opcode
             
             if (!Main.db.query("SELECT id FROM contact WHERE o_guid = %d AND c_guid= %d", c.getGuid(), c.getGuid()).first())
             {
-                out.writeByte(SMSG_ADD_CONTACT_SUCCESS);
-                out.writeInt(c.getGuid());
-                out.writeObject(c.getUsername());
-                out.writeObject(c.getTitle());
-                out.writeObject(c.getPSM());
-                out.writeInt(c.getStatus());
-                out.flush();
+                Packet p = new Packet(SMSG_ADD_CONTACT_SUCCESS);
+                p.put(c.getGuid());
+                p.put(c.getUsername());
+                p.put(c.getTitle());
+                p.put(c.getPSM());
+                p.put(c.getStatus());
+                
+                SendPacket(p);
                 
                 Main.db.execute("INSERT INTO contact(o_guid, c_guid) VALUES(%d, %d)", c.getGuid(), c.getGuid());
             }
@@ -219,7 +230,7 @@ public class Session implements Runnable, Opcode
             ResultSet acrs = Main.db.query("SELECT id FROM contact WHERE o_guid = %d and c_guid = %d", c.getGuid(), guid);
             
             if (acrs.first())
-                out.writeByte(SMSG_CONTACT_ALREADY_IN_LIST);
+                SendPacket(new Packet(SMSG_CONTACT_ALREADY_IN_LIST));
             else
             {
                 System.out.printf("Send Contact: %s to client %d\n", username, c.getGuid());
@@ -237,10 +248,12 @@ public class Session implements Runnable, Opcode
                     if (target != null)
                     {
                         System.out.printf("Send Contact Request: %s to client %d\n", c.getUsername(), guid);
-                        target.getSession().getOutputStream().writeByte(SMSG_CONTACT_REQUEST);
-                        target.getSession().getOutputStream().writeInt(c.getGuid());
-                        target.getSession().getOutputStream().writeObject(c.getUsername());
-                        target.getSession().getOutputStream().flush();
+                        
+                        Packet p = new Packet(SMSG_CONTACT_REQUEST);
+                        p.put(c.getGuid());
+                        p.put(c.getUsername());
+                        
+                        target.getSession().SendPacket(p);
                     }
                     else
                         Main.db.execute("INSERT INTO contact_request(o_guid, r_guid) VALUES(%d, %d)", guid, c.getGuid());
@@ -257,27 +270,27 @@ public class Session implements Runnable, Opcode
                     }
                 }
                 
-                out.writeByte(SMSG_ADD_CONTACT_SUCCESS);
-                out.writeInt(guid);
-                out.writeObject(username);
-                out.writeObject(title);
-                out.writeObject(psm);
-                out.writeInt(currentStatus);
+                Packet p = new Packet(SMSG_ADD_CONTACT_SUCCESS);
+                p.put(guid);
+                p.put(username);
+                p.put(title);
+                p.put(psm);
+                p.put(currentStatus);
+                
+                SendPacket(p);
             }
         }
         else
         {
-            out.writeByte(SMSG_CONTACT_NOT_FOUND);
+            SendPacket(new Packet(SMSG_CONTACT_NOT_FOUND));
         }
-                        
-        out.flush();
     }
     
-    void HandleContactAcceptOpcode() throws Exception
+    void HandleContactAcceptOpcode(Packet packet) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_CONTACT_ACCEPT\n");
         
-        int guid = in.readInt();
+        int guid = (int)packet.get();
         
         Main.db.execute("DELETE FROM contact_request WHERE o_guid = %d and r_guid = %d", c.getGuid(), guid);
         Main.db.execute("INSERT INTO contact(o_guid, c_guid) VALUES(%d, %d)", c.getGuid(), guid);
@@ -291,33 +304,34 @@ public class Session implements Runnable, Opcode
         if (rrs.first())
         {
             System.out.printf("Send Contact: %s to client %d\n", rrs.getString(1), c.getGuid());
-            out.writeByte(SMSG_ADD_CONTACT_SUCCESS);
-            out.writeInt(guid);
-            out.writeObject(rrs.getString(1));
-            out.writeObject(rrs.getString(2));
-            out.writeObject(rrs.getString(3));
-            out.writeInt(requestorStatus);
-            out.flush();
+            Packet p = new Packet(SMSG_ADD_CONTACT_SUCCESS);
+            p.put(guid);
+            p.put(rrs.getString(1));
+            p.put(rrs.getString(2));
+            p.put(rrs.getString(3));
+            p.put(requestorStatus);
+            
+            SendPacket(p);
         }
         
         if (requestor != null)
             requestor.getSession().SendStatusChanged(c.getGuid(), c.getStatus());
     }
     
-    void HandleContactDeclineOpcode() throws Exception
+    void HandleContactDeclineOpcode(Packet packet) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_CONTACT_DECLINE\n");
         
-        int guid = in.readInt();
+        int guid = (int)packet.get();
         
         Main.db.execute("DELETE FROM contact_request WHERE o_guid = %d and r_guid = %d", c.getGuid(), guid);
     }
     
-    void HandleRemoveContactOpcode() throws Exception
+    void HandleRemoveContactOpcode(Packet packet) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_REMOVE_CONTACT\n");
         
-        int guid = in.readInt();
+        int guid = (int)packet.get();
         
         Main.db.execute("DELETE FROM contact WHERE o_guid = %d AND c_guid = %d", c.getGuid(), guid);
         
@@ -327,13 +341,13 @@ public class Session implements Runnable, Opcode
             target.getSession().SendStatusChanged(c.getGuid(), 3);
     }
     
-    void HandleChatMessageOpcode() throws Exception
+    void HandleChatMessageOpcode(Packet packet) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_SEND_CHAT_MESSAGE\n");
                         
         int from = c.getGuid();
-        int to = in.readInt();
-        String message = String.format("%s", in.readObject());
+        int to = (int)packet.get();
+        String message = (String)packet.get();
                         
         System.out.printf("Chat Message Receive From: %d, To %d, Message: %s\n", from, to, message);
         
@@ -341,10 +355,12 @@ public class Session implements Runnable, Opcode
         
         if (target != null)
         {
-            target.getSession().getOutputStream().writeByte(SMSG_SEND_CHAT_MESSAGE);
-            target.getSession().getOutputStream().writeInt(from);
-            target.getSession().getOutputStream().writeObject(message);
-            target.getSession().getOutputStream().flush();
+            Packet p = new Packet(SMSG_SEND_CHAT_MESSAGE);
+            p.put(from);
+            p.put(message);
+            
+            target.getSession().SendPacket(p);
+            
             System.out.printf("Send message success\n");
         }
         else
@@ -354,9 +370,11 @@ public class Session implements Runnable, Opcode
     void SendStatusChanged(int guid, int status) throws Exception
     {
         System.out.printf("Send status change From: %d, To: %d, Status: %d\n", guid, c.getGuid(), status);
-        out.writeByte(SMSG_STATUS_CHANGED);
-        out.writeInt(guid);
-        out.writeInt(status);
-        out.flush();
+        
+        Packet p = new Packet(SMSG_STATUS_CHANGED);
+        p.put(guid);
+        p.put(status);
+        
+        SendPacket(p);
     }
 }

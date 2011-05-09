@@ -3,6 +3,7 @@ package UI;
 import Core.Contact;
 import Core.NetworkManager;
 import Core.Opcode;
+import Core.Packet;
 import Core.UIManager;
 
 import java.awt.event.ActionEvent;
@@ -262,9 +263,11 @@ public class MasterUI extends JFrame implements Opcode
                     if (chatUI != null)
                         UIManager.getChatUIList().remove(chatUI);
                     
-                    NetworkManager.writeByte(CMSG_REMOVE_CONTACT);
-                    NetworkManager.writeInt(guid);
-                    NetworkManager.flush();
+                    
+                    Packet p = new Packet(CMSG_REMOVE_CONTACT);
+                    p.put(guid);
+                    
+                    NetworkManager.SendPacket(p);
                     
                     model.removeElementAt(contactList.getSelectedIndex());
                     
@@ -279,9 +282,10 @@ public class MasterUI extends JFrame implements Opcode
                 //Only logout have special handle, status change only inform server
                 if (cStatus.getSelectedIndex() != 4)
                 {
-                    NetworkManager.writeByte(CMSG_STATUS_CHANGED);
-                    NetworkManager.writeInt(cStatus.getSelectedIndex());
-                    NetworkManager.flush();
+                    Packet p = new Packet(CMSG_STATUS_CHANGED);
+                    p.put(cStatus.getSelectedIndex());
+                    
+                    NetworkManager.SendPacket(p);
                 }
                 else
                     NetworkManager.logout();

@@ -19,19 +19,23 @@ public class NetworkThread implements Runnable, Opcode
         thread = Thread.currentThread();
         
         NetworkManager.getContactList();
-        
+        NetworkManager.SendPacket(new Packet((byte)67));
         try
         {
-            byte b;
-            
+            Packet p;
             // The server will first send SMSG_CONTACT_DETAIL signal to inform client that this is a client detail data.
-            while((b = NetworkManager.readByte()) == SMSG_CONTACT_DETAIL)
+            while(true)
             {
-                int guid = NetworkManager.readInt();
-                String c_username = String.format("%s", NetworkManager.readObject());
-                String c_title = String.format("%s", NetworkManager.readObject());
-                String c_psm = String.format("%s", NetworkManager.readObject());
-                int c_status = NetworkManager.readInt();
+                p = NetworkManager.ReceivePacket();
+                
+                if (p.getOpcode() != SMSG_CONTACT_DETAIL)
+                    break;
+                
+                int guid = (int)p.get();
+                String c_username = (String)p.get();
+                String c_title = (String)p.get();
+                String c_psm = (String)p.get();
+                int c_status = (int)p.get();
                 
                 Contact c = new Contact(guid, c_username, c_title, c_psm, c_status);
                 
@@ -40,25 +44,26 @@ public class NetworkThread implements Runnable, Opcode
             
             // The server will send SMSG_CONTACT_LIST_ENDED signal to inform client that all client data is sent.
             // If the client receive signal other than SMSG_CONTACT_LIST_ENDED, the client may miss some contact data while receiving.
-            if (b != SMSG_CONTACT_LIST_ENDED)
+            if (p.getOpcode() != SMSG_CONTACT_LIST_ENDED)
                 UIManager.showMessageDialog("Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
             
             // Tell the server the current status of client. Will be useful in login as this status when it is implemented.
-            NetworkManager.writeByte(CMSG_STATUS_CHANGED);
-            NetworkManager.writeInt(0);
-            NetworkManager.flush();
+            Packet statusPacket = new Packet(CMSG_STATUS_CHANGED);
+            statusPacket.put(0);
+            
+            NetworkManager.SendPacket(statusPacket);
             
             while(thread == Thread.currentThread())
             {
-                b = NetworkManager.readByte();
+                p = NetworkManager.ReceivePacket();
                 
-                switch (b)
+                switch (p.getOpcode())
                 {
                     case SMSG_SEND_CHAT_MESSAGE:
-                        HandleChatMessageOpcode();
+                        HandleChatMessageOpcode(p);
                         break;
                     case SMSG_STATUS_CHANGED:
-                        HandleStatusChangedOpcode();
+                        HandleStatusChangedOpcode(p);
                         break;
                     case SMSG_CONTACT_ALREADY_IN_LIST:
                         UIManager.showMessageDialog("The contact is already in list.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
@@ -67,10 +72,10 @@ public class NetworkThread implements Runnable, Opcode
                         UIManager.showMessageDialog("No such user found.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
                         break;
                     case SMSG_ADD_CONTACT_SUCCESS:
-                        HandleAddContactSuccessOpcode();
+                        HandleAddContactSuccessOpcode(p);
                         break;
                     case SMSG_CONTACT_REQUEST:
-                        HandleContactRequestOpcode();
+                        HandleContactRequestOpcode(p);
                         break;
                 }
             }
@@ -78,10 +83,11 @@ public class NetworkThread implements Runnable, Opcode
         catch(Exception e) {}
     }
     
-    void HandleChatMessageOpcode()
+    void HandleChatMessageOpcode(Packet packet)
     {
-        int senderGuid = NetworkManager.readInt();
-        String message = String.format("%s", NetworkManager.readObject());
+        int senderGuid = (int)packet.get();
+        String message = (String)packet.get();
+        
         Contact s_contact = null;
         
         // Search contact list have this contact detail or not.
@@ -102,31 +108,31 @@ public class NetworkThread implements Runnable, Opcode
         targetUI.toFront();
     }
     
-    void HandleStatusChangedOpcode()
+    void HandleStatusChangedOpcode(Packet packet)
     {
-        int guid = NetworkManager.readInt();
-        int status = NetworkManager.readInt();
+        int guid = (int)packet.get();
+        int status = (int)packet.get();
         
         UIManager.UpdateContactStatus(guid, status);
     }
     
-    void HandleAddContactSuccessOpcode()
+    void HandleAddContactSuccessOpcode(Packet packet)
     {
-        int guid = NetworkManager.readInt();
-        String username = String.format("%s", NetworkManager.readObject());
-        String title = String.format("%s", NetworkManager.readObject());
-        String psm = String.format("%s", NetworkManager.readObject());
-        int c_status = NetworkManager.readInt();
+        int guid = (int)packet.get();
+        String username = (String)packet.get();
+        String title = (String)packet.get();
+        String psm = (String)packet.get();
+        int c_status = (int)packet.get();
        
         Contact c = new Contact(guid, username, title, psm, c_status);
        
         UIManager.getMasterUI().addContact(c);
     }
 
-    void HandleContactRequestOpcode()
+    void HandleContactRequestOpcode(Packet packet)
     {
-        int r_guid = NetworkManager.readInt();
-        String r_username = String.format("%s", NetworkManager.readObject());
+        int r_guid = (int)packet.get();
+        String r_username = (String)packet.get();
         
         new ContactRequestUI(r_guid, r_username);
     }

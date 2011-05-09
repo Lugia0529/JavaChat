@@ -3,6 +3,7 @@ package UI;
 import Core.Contact;
 import Core.NetworkManager;
 import Core.Opcode;
+import Core.Packet;
 import Core.UIManager;
 
 import java.awt.event.KeyAdapter;
@@ -89,7 +90,7 @@ public final class ChatUI extends JFrame implements Opcode
             // Only handle enter key in Chat Interface.
             if (e.getKeyCode() == e.VK_ENTER)
             {
-                // Shift + Enter mean next line.
+                // Shift + Enter = next line.
                 if (e.isShiftDown())
                 {
                     txtInput.append("\n");
@@ -104,17 +105,17 @@ public final class ChatUI extends JFrame implements Opcode
                 }
                 
                 // Send the message to server.
-                NetworkManager.writeByte(CMSG_SEND_CHAT_MESSAGE);
-                NetworkManager.writeInt(c.getGuid());
-                NetworkManager.writeObject(txtInput.getText().trim());
-                NetworkManager.flush();
+                Packet p = new Packet(CMSG_SEND_CHAT_MESSAGE);
+                p.put(c.getGuid());
+                p.put(txtInput.getText().trim());
+                
+                NetworkManager.SendPacket(p);
                 
                 String message = txtInput.getText().trim();
                 message = message.replaceAll("\n", "\n     ");
                 
                 // Output the message to Chat Interface too.
-                txtOutput.append(String.format("%s says:\n", accountTitle));
-                txtOutput.append(String.format("     %s\n", message));
+                append(accountTitle, message);
                 
                 // Reset the input text area.
                 txtInput.setText("");

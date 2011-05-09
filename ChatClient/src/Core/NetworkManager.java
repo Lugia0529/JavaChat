@@ -18,7 +18,7 @@ public class NetworkManager implements Opcode
     public static void destroy()
     {
         try { socket.close(); }
-        catch (Exception e) {e.printStackTrace();}
+        catch (Exception e) {}
         
         socket = null;
         in = null;
@@ -34,19 +34,22 @@ public class NetworkManager implements Opcode
             out = new ObjectOutputStream(socket.getOutputStream());
             
             // If connection is create succefully, send the login detail to the server.
-            writeByte(CMSG_LOGIN);
-            writeObject(username);
-            writeObject(password);
-            flush();
+            Packet loginPacket = new Packet(CMSG_LOGIN);
+            loginPacket.put(username);
+            loginPacket.put(password);
+            
+            SendPacket(loginPacket);
             
             // Create input stream.
             in = new ObjectInputStream(socket.getInputStream());
             
-            switch(in.readByte())
+            Packet p = (Packet)in.readObject();
+            
+            switch(p.getOpcode())
             {
                 case SMSG_LOGIN_SUCCESS: /* Login is success */
-                    String name = String.format("%s", in.readObject());
-                    String psm = String.format("%s", in.readObject());
+                    String name = (String)p.get();
+                    String psm = (String)p.get();
                     
                     new Thread(new NetworkThread()).start();
                     
@@ -78,8 +81,7 @@ public class NetworkManager implements Opcode
     
     public static void logout()
     {
-        writeByte(CMSG_LOGOUT);
-        flush();
+        SendPacket(new Packet(CMSG_LOGOUT));
         
         NetworkThread.stop();
         destroy();
@@ -92,80 +94,21 @@ public class NetworkManager implements Opcode
     
     public static void getContactList()
     {
-        writeByte(CMSG_GET_CONTACT_LIST);
-        flush();
+        SendPacket(new Packet(CMSG_GET_CONTACT_LIST));
     }
     
-    public static void writeByte(byte b)
+    public static void SendPacket(Packet p)
     {
         try
         {
-            out.writeByte(b);
+            out.writeObject(p);
+            out.flush();
         }
-        catch(Exception e) {}
+        catch (Exception e){}
     }
     
-    public static void writeInt(int i)
+    public static Packet ReceivePacket() throws Exception
     {
-        try
-        {
-            out.writeInt(i);
-        }
-        catch(Exception e) {}
-    }
-    
-    public static void writeObject(Object o)
-    {
-        try
-        {
-            out.writeObject(o);
-        }
-        catch(Exception e) {}
-    }
-    
-    public static void writeObject(Object... o)
-    {
-        try
-        {
-            for(int i = 0; i < o.length; i++)
-                out.writeObject(o[i]);
-        }
-        catch(Exception e) {}
-    }
-    
-    public static byte readByte()
-    {
-        try
-        {
-            return in.readByte();
-        }
-        catch (Exception e) { return 0; }
-    }
-    
-    public static int readInt()
-    {
-        try
-        {
-            return in.readInt();
-        }
-        catch (Exception e) { return 0; }
-    }
-    
-    public static Object readObject()
-    {
-        try
-        {
-            return in.readObject();
-        }
-        catch (Exception e) { return null; }
-    }
-    
-    public static void flush()
-    {
-       try
-       {
-           out.flush();
-       }
-       catch (Exception e) {}
+        return (Packet)in.readObject();
     }
 }
