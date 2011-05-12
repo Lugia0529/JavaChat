@@ -288,7 +288,7 @@ public class MasterUI extends JFrame implements Opcode
                     NetworkManager.SendPacket(p);
                 }
                 else
-                    NetworkManager.logout();
+                    NetworkManager.SendPacket(new Packet(CMSG_LOGOUT));
             }
         }
     };
@@ -337,7 +337,7 @@ public class MasterUI extends JFrame implements Opcode
             // Inform the server that client is ready to logout when client is close that Contact List.
             // Only logout when client is logged in
             if (!isLoginUI)
-                NetworkManager.logout();
+                NetworkManager.SendPacket(new Packet(CMSG_LOGOUT));
             
             System.exit(0);
         }

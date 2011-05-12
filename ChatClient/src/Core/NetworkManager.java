@@ -1,5 +1,6 @@
 package Core;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -32,6 +33,9 @@ public class NetworkManager implements Opcode
             // Connect to the server.
             socket = new Socket("127.0.0.1", 6769);
             out = new ObjectOutputStream(socket.getOutputStream());
+            
+            // 5 mins timeout
+            socket.setSoTimeout(5 * 60 * 1000);
             
             // If connection is create succefully, send the login detail to the server.
             Packet loginPacket = new Packet(CMSG_LOGIN);
@@ -76,13 +80,20 @@ public class NetworkManager implements Opcode
                     break;
             }
         }
-        catch (Exception e){}
+        catch (IOException ioe)
+        {
+            UIManager.showMessageDialog("Unable to connect to server. Please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
+            UIManager.getMasterUI().enableLoginInput(true);
+        }
+        catch (Exception e)
+        {
+            UIManager.showMessageDialog("Unknown error occur, please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
+            UIManager.getMasterUI().enableLoginInput(true);
+        }
     }
     
     public static void logout()
     {
-        SendPacket(new Packet(CMSG_LOGOUT));
-        
         NetworkThread.stop();
         destroy();
         

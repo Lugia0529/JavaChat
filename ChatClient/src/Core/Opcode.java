@@ -22,4 +22,8 @@ public interface Opcode
     final byte SMSG_CONTACT_REQUEST         = 0x12;
     final byte CMSG_CONTACT_ACCEPT          = 0x13;
     final byte CMSG_CONTACT_DECLINE         = 0x14;
+    final byte CMSG_TIME_SYNC_RESP          = 0x15;
+    final byte CMSG_PING                    = 0x16;
+    final byte SMSG_PING                    = 0x17;
+    final byte SMSG_LOGOUT_COMPLETE         = 0x18;
 }

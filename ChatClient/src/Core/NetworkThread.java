@@ -2,28 +2,38 @@ package Core;
 
 import UI.ChatUI;
 import UI.ContactRequestUI;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JOptionPane;
 
 public class NetworkThread implements Runnable, Opcode
 {
     private static volatile Thread thread;
+    private static Timer timer;
+    private int counter;
     
     public static void stop()
     {
+        timer.cancel();
+        
         thread = null;
+        timer = null;
     }
     
     public void run()
     {
         thread = Thread.currentThread();
         
+        // The server will first send SMSG_CONTACT_DETAIL signal to inform client that this is a client detail data.
         NetworkManager.getContactList();
-        NetworkManager.SendPacket(new Packet((byte)67));
+        
         try
         {
             Packet p;
-            // The server will first send SMSG_CONTACT_DETAIL signal to inform client that this is a client detail data.
+            
             while(true)
             {
                 p = NetworkManager.ReceivePacket();
@@ -53,6 +63,9 @@ public class NetworkThread implements Runnable, Opcode
             
             NetworkManager.SendPacket(statusPacket);
             
+            timer = new Timer();
+            timer.scheduleAtFixedRate(new PeriodicTimeSyncResp(), 0, 10 * 1000);
+            
             while(thread == Thread.currentThread())
             {
                 p = NetworkManager.ReceivePacket();
@@ -77,10 +90,28 @@ public class NetworkThread implements Runnable, Opcode
                     case SMSG_CONTACT_REQUEST:
                         HandleContactRequestOpcode(p);
                         break;
+                    case SMSG_PING:
+                        NetworkManager.SendPacket(new Packet(CMSG_PING));
+                        break;
+                    case SMSG_LOGOUT_COMPLETE:
+                        NetworkManager.logout();
+                        break;
                 }
             }
         }
-        catch(Exception e) {}
+        catch (SocketException se)
+        {
+            NetworkManager.logout();
+            
+            UIManager.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+        }
+        catch (SocketTimeoutException ste)
+        {
+            NetworkManager.logout();
+            
+            UIManager.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+        }
+        catch (Exception e) {}
     }
     
     void HandleChatMessageOpcode(Packet packet)
@@ -135,5 +166,22 @@ public class NetworkThread implements Runnable, Opcode
         String r_username = (String)packet.get();
         
         new ContactRequestUI(r_guid, r_username);
+    }
+    
+    class PeriodicTimeSyncResp extends TimerTask 
+    {
+        public PeriodicTimeSyncResp()
+        {
+            counter = 0;
+        }
+        
+        public void run() 
+        {
+            Packet p = new Packet(CMSG_TIME_SYNC_RESP);
+            p.put(counter++);
+            p.put(System.currentTimeMillis());
+            
+            NetworkManager.SendPacket(p);
+        }
     }
 }

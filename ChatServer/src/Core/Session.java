@@ -2,15 +2,22 @@ package Core;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.sql.ResultSet;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Session implements Runnable, Opcode
 {
     private Client c;
     private ObjectInputStream in;
     private ObjectOutputStream out;
+    private Timer timer;
     
     private volatile Thread session;
+    
+    private long pingTicks;
     
     public Session(Client c, ObjectInputStream in, ObjectOutputStream out)
     {
@@ -21,7 +28,10 @@ public class Session implements Runnable, Opcode
     
     public void stop()
     {
+        timer.cancel();
+        
         session = null;
+        timer = null;
     }
     
     public Packet ReceivePacket() throws Exception
@@ -71,18 +81,36 @@ public class Session implements Runnable, Opcode
                     case CMSG_SEND_CHAT_MESSAGE:
                         HandleChatMessageOpcode(p);
                         break;
+                    case CMSG_TIME_SYNC_RESP:
+                        HandleTimeSyncRespOpcode(p);
+                        break;
+                    case CMSG_PING:
+                        HandlePingOpcode();
+                        break;
                     default:
                         System.out.printf("\nUnknown Opcode Receive: 0x%02X\n", p.getOpcode());
                         break;
                 }
             }
-            
-            System.out.printf("Session thread %d stopped successfully.\n", c.getGuid());
-            
-            c = null;
-            out = null;
         }
-        catch(Exception e){}
+        catch (SocketException se)
+        {
+            System.out.printf("\nClient %s (guid: %d) connection was closed unexpectedly. (possible disconnected?)\n", c.getUsername(), c.getGuid());
+            
+            Logout();
+        }
+        catch (SocketTimeoutException ste)
+        {
+            // Client will send a Time Sync every 10 sec.
+            // Every 30 sec, the server will request the client to send a ping acknowledgement.
+            // If a client does not send any packet for 60 seconds, we consider that it is disconnected.
+            System.out.printf("\nClient %s (guid: %d) is not respond for 60 seconds. (possible disconnected?)\n", c.getUsername(), c.getGuid());
+            
+            Logout();
+        }
+        catch (Exception e){}
+        
+        System.out.printf("Session thread %d stopped successfully.\n", c.getGuid());
     }
     
     void HandleGetContactListOpcode(/* Packet packet */) throws Exception
@@ -139,32 +167,20 @@ public class Session implements Runnable, Opcode
             SendPacket(p);
             
             Thread.sleep(10);
-        }                
+        }
+        
+        // We start a latency check after 1 sec.
+        timer = new Timer();
+        timer.schedule(new PeriodicLatencyCheck(), 1000);
     }
     
     void HandleLogoutOpcode(/* Packet packet */) throws Exception
     {
         System.out.printf("\nOpcode: CMSG_LOGOUT\n");
         
-        Main.clientList.remove(c);
+        SendPacket(new Packet(SMSG_LOGOUT_COMPLETE));
         
-        System.out.printf("Closing client socket %d.\n", c.getGuid());
-        c.getSocket().close();
-        
-        Main.db.execute("UPDATE account SET online = 0 WHERE guid = %d", c.getGuid());
-        System.out.printf("Stopping session thread %d.\n", c.getGuid());
-        
-        ResultSet rs = Main.db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
-        
-        while(rs.next())
-        {
-            Client target = Main.clientList.findClient(rs.getInt(1));
-        
-            if (target != null)
-                target.getSession().SendStatusChanged(c.getGuid(), 3);
-        }
-        
-        stop();               
+        Logout();
     }
     
     void HandleStatusChangedOpcode(Packet packet) throws Exception
@@ -367,6 +383,46 @@ public class Session implements Runnable, Opcode
             System.out.printf("Send Chat Message Cancel: Client %d is currently offline.\n", to);
     }
     
+    void HandleTimeSyncRespOpcode(Packet packet)
+    {
+        System.out.printf("\nOpcode: CMSG_TIME_SYNC_RESP\n");
+        
+        int counter = (int)packet.get();
+        long ticks = (long)packet.get();
+        
+        System.out.printf("From Client: %s (guid: %d)\n", c.getUsername(), c.getGuid());
+        
+        // first time receive this opcode
+        if (counter == 0)
+        {
+            c.setCounter(counter);
+            c.setTicks(ticks);
+            System.out.printf("First time sync received: counter %d, client ticks %d\n", counter, ticks);
+            return;
+        }
+        
+        if (counter != c.getCounter() + 1)
+            System.out.printf("Wrong time sync counter: should be %d, but receive %d\n", c.getCounter() + 1, counter);
+        
+        System.out.printf("Time sync received: counter %d, client ticks %d, time since last sync %d\n", counter, ticks, ticks - c.getTicks());
+        
+        c.setCounter(counter);
+        c.setTicks(ticks);
+    }
+    
+    void HandlePingOpcode(/* Packet packet */)
+    {
+        System.out.printf("\nOpcode: CMSG_PING\n");
+        int latency = (int)(System.currentTimeMillis() - pingTicks);
+        
+        System.out.printf("From client: %s (guid: %d), latency: %dms\n", c.getUsername(), c.getGuid(), latency);
+        
+        c.setLatency(latency);
+        
+        // Check latency 30 sec later.
+        timer.schedule(new PeriodicLatencyCheck(), 30 * 1000);
+    }
+    
     void SendStatusChanged(int guid, int status) throws Exception
     {
         System.out.printf("Send status change From: %d, To: %d, Status: %d\n", guid, c.getGuid(), status);
@@ -376,5 +432,45 @@ public class Session implements Runnable, Opcode
         p.put(status);
         
         SendPacket(p);
+    }
+    
+    void Logout()
+    {
+        try
+        {
+            Main.clientList.remove(c);
+            
+            System.out.printf("Closing client socket %d.\n", c.getGuid());
+            c.getSocket().close();
+            
+            Main.db.execute("UPDATE account SET online = 0 WHERE guid = %d", c.getGuid());
+            System.out.printf("Stopping session thread %d.\n", c.getGuid());
+            
+            ResultSet rs = Main.db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
+            
+            while(rs.next())
+            {
+                Client target = Main.clientList.findClient(rs.getInt(1));
+            
+                if (target != null)
+                    target.getSession().SendStatusChanged(c.getGuid(), 3);
+            }
+            
+            stop();
+        }
+        catch (Exception e){}
+    }
+    
+    class PeriodicLatencyCheck extends TimerTask 
+    {
+        public void run()
+        {
+            try
+            {
+                pingTicks = System.currentTimeMillis();
+                SendPacket(new Packet(SMSG_PING));
+            }
+            catch (Exception e){}
+        }
     }
 }

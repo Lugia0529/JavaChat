@@ -15,16 +15,28 @@ public class Client
     private Socket socket;
     private Session session;
     
+    private int latency;
+    private int counter;
+    private long ticks;
+    
     public Client(int guid, String username)
     {
         this.guid = guid;
         this.username = username;
+        
+        this.latency = 0;
+        this.counter = 0;
+        this.ticks = 0;
     }
     
     public void createSession(Socket socket, ObjectInputStream in, ObjectOutputStream out) throws IOException
     {
         this.session = new Session(this, in, out);
         this.socket = socket;
+        
+        // 60 sec timeout
+        this.socket.setSoTimeout(60 * 1000);
+        
         new Thread(session).start();
     }
     
@@ -41,6 +53,21 @@ public class Client
     public void setStatus(int status)
     {
         this.status = status;
+    }
+    
+    public void setLatency(int latency)
+    {
+        this.latency = latency;
+    }
+    
+    public void setCounter(int counter)
+    {
+        this.counter = counter;
+    }
+    
+    public void setTicks(Long ticks)
+    {
+        this.ticks = ticks;
     }
     
     public int getGuid()
@@ -66,6 +93,21 @@ public class Client
     public int getStatus()
     {
         return this.status;
+    }
+    
+    public int getLatency()
+    {
+        return this.latency;
+    }
+    
+    public int getCounter()
+    {
+        return this.counter;
+    }
+    
+    public long getTicks()
+    {
+        return this.ticks;
     }
     
     public Socket getSocket()
