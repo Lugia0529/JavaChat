@@ -26,4 +26,58 @@ public interface Opcode
     final byte CMSG_PING                    = 0x16;
     final byte SMSG_PING                    = 0x17;
     final byte SMSG_LOGOUT_COMPLETE         = 0x18;
+    
+    enum SessionStatus
+    {
+        NEVER,         // Opcode is never send by a client, maybe a server opcode, or an invalid opcode.
+        NOTLOGGEDIN,   // Client is not logged in.
+        LOGGEDIN       // CLient is currently logged in, ClientList contain this client detail.
+    }
+    
+    final OpcodeDetail[] opcodeTable = 
+    {
+        new OpcodeDetail /* 0x00 */ ("UNKNOWN",                      false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x01 */ ("CMSG_LOGIN",                   false, SessionStatus.NOTLOGGEDIN, 0, null                        ),
+        new OpcodeDetail /* 0x02 */ ("CMSG_LOGOUT",                  false, SessionStatus.LOGGEDIN,    0, "HandleLogoutOpcode"        ),
+        new OpcodeDetail /* 0x03 */ ("SMSG_LOGIN_SUCCESS",           false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x04 */ ("SMSG_LOGIN_FAILED",            false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x05 */ ("SMSG_MULTI_LOGIN",             false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x06 */ ("CMSG_GET_CONTACT_LIST",        false, SessionStatus.LOGGEDIN,    0, "HandleGetContactListOpcode"),
+        new OpcodeDetail /* 0x07 */ ("CMSG_ADD_CONTACT",             true,  SessionStatus.LOGGEDIN,    1, "HandleAddContactOpcode"    ),
+        new OpcodeDetail /* 0x08 */ ("CMSG_REMOVE_CONTACT",          true,  SessionStatus.LOGGEDIN,    1, "HandleRemoveContactOpcode" ),
+        new OpcodeDetail /* 0x09 */ ("SMSG_ADD_CONTACT_SUCCESS",     false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x0A */ ("CMSG_STATUS_CHANGED",          true,  SessionStatus.LOGGEDIN,    1, "HandleStatusChangedOpcode" ),
+        new OpcodeDetail /* 0x0B */ ("SMSG_CONTACT_DETAIL",          false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x0C */ ("SMSG_CONTACT_LIST_ENDED",      false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x0D */ ("CMSG_SEND_CHAT_MESSAGE",       true,  SessionStatus.LOGGEDIN,    2, "HandleChatMessageOpcode"   ),
+        new OpcodeDetail /* 0x0E */ ("SMSG_SEND_CHAT_MESSAGE",       false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x0F */ ("SMSG_STATUS_CHANGED",          false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x10 */ ("SMSG_CONTACT_ALREADY_IN_LIST", false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x11 */ ("SMSG_CONTACT_NOT_FOUND",       false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x12 */ ("SMSG_CONTACT_REQUEST",         false, SessionStatus.NEVER,       0, null                        ),
+        new OpcodeDetail /* 0x13 */ ("CMSG_CONTACT_ACCEPT",          true,  SessionStatus.LOGGEDIN,    1, "HandleContactAcceptOpcode" ),
+        new OpcodeDetail /* 0x14 */ ("CMSG_CONTACT_DECLINE",         true,  SessionStatus.LOGGEDIN,    1, "HandleContactDeclineOpcode"),
+        new OpcodeDetail /* 0x15 */ ("CMSG_TIME_SYNC_RESP",          true,  SessionStatus.LOGGEDIN,    2, "HandleTimeSyncRespOpcode"  ),
+        new OpcodeDetail /* 0x16 */ ("CMSG_PING",                    false, SessionStatus.LOGGEDIN,    0, "HandlePingOpcode"          ),
+        new OpcodeDetail /* 0x17 */ ("SMSG_PING",                    false, SessionStatus.LOGGEDIN,    0, null                        ),
+        new OpcodeDetail /* 0x18 */ ("SMSG_LOGOUT_COMPLETE",         false, SessionStatus.NEVER,       0, null                        )
+    };
+    
+    final class OpcodeDetail
+    {
+        final String name;
+        final boolean reqPacketData;
+        final SessionStatus sessionStatus;
+        final int length;
+        final String handler;
+        
+        public OpcodeDetail(String name, boolean reqPacketData, SessionStatus status, int length, String Handler)
+        {
+            this.name = name;
+            this.reqPacketData = reqPacketData;
+            this.sessionStatus = status;
+            this.length = length;
+            this.handler = Handler;
+        }
+    }
 }

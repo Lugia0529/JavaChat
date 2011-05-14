@@ -2,6 +2,7 @@ package Core;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.sql.ResultSet;
@@ -55,43 +56,53 @@ public class Session implements Runnable, Opcode
             {
                 Packet p = ReceivePacket();
                 
-                switch(p.getOpcode())
+                if (p.getOpcode() < 0x00 || p.getOpcode() >= opcodeTable.length)
                 {
-                    case CMSG_GET_CONTACT_LIST:
-                        HandleGetContactListOpcode();
-                        break;
-                    case CMSG_LOGOUT:
-                        HandleLogoutOpcode();
-                        break;
-                    case CMSG_STATUS_CHANGED:
-                        HandleStatusChangedOpcode(p);
-                        break;
-                    case CMSG_ADD_CONTACT:
-                        HandleAddContactOpcode(p);
-                        break;
-                    case CMSG_CONTACT_ACCEPT:
-                        HandleContactAcceptOpcode(p);
-                        break;
-                    case CMSG_CONTACT_DECLINE:
-                        HandleContactDeclineOpcode(p);
-                        break;
-                    case CMSG_REMOVE_CONTACT:
-                        HandleRemoveContactOpcode(p);
-                        break;
-                    case CMSG_SEND_CHAT_MESSAGE:
-                        HandleChatMessageOpcode(p);
-                        break;
-                    case CMSG_TIME_SYNC_RESP:
-                        HandleTimeSyncRespOpcode(p);
-                        break;
-                    case CMSG_PING:
-                        HandlePingOpcode();
-                        break;
-                    default:
-                        System.out.printf("\nUnknown Opcode Receive: 0x%02X\n", p.getOpcode());
-                        break;
+                    System.out.printf("\nUnknown Opcode Receive: 0x%02X\n", p.getOpcode());
+                    continue;
+                }
+                
+                OpcodeDetail opcode = opcodeTable[p.getOpcode()];
+                
+                System.out.printf("\nOpcode: %s\n", opcode.name);
+                
+                if (opcode.sessionStatus != SessionStatus.LOGGEDIN)
+                {
+                    System.out.printf("Invalid Opcode Receive: %s\n", opcode.name);
+                    continue;
+                }
+                
+                if (p.size() != opcode.length)
+                {
+                    System.out.printf("Client %s (guid: %d) send a packet with wrong size, should be %d, but receive %d. (Attemp to crash server?)\n", c.getUsername(), c.getGuid(), opcode.length, p.size());
+                    continue;
+                }
+                
+                if (opcode.handler != null)
+                {
+                    Class[] types;
+                    Object[] args;
+                    
+                    types = opcode.reqPacketData ? new Class[] { Packet.class } : new Class[] {};
+                    args = opcode.reqPacketData ? new Object[] { p } : new Object[] {};
+                
+                    this.getClass().getDeclaredMethod(opcode.handler, types).invoke(this, args);
+                }
+                else
+                {
+                    System.out.printf("Processing is not require for this packet.\n");
+                    continue;
                 }
             }
+        }
+        catch (InvocationTargetException ite)
+        {
+            Throwable t = ite.getCause();
+            
+            if (t instanceof ClassCastException)
+                System.out.printf("Client %s (guid: %d) send a packet with wrong structure. (Attemp to crash server?)", c.getUsername(), c.getGuid());
+            else
+                System.out.printf("Unhandler exception occur while processing packet data.\nException message: %s\n", ite.getCause());
         }
         catch (SocketException se)
         {
@@ -108,15 +119,13 @@ public class Session implements Runnable, Opcode
             
             Logout();
         }
-        catch (Exception e){}
+        catch (Exception e){e.printStackTrace();}
         
         System.out.printf("Session thread %d stopped successfully.\n", c.getGuid());
     }
     
     void HandleGetContactListOpcode(/* Packet packet */) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_GET_CONTACT_LIST\n");
-        
         ResultSet rs = Main.db.query("SELECT a.guid, a.username, a.title, a.psm FROM contact AS c LEFT JOIN account AS a ON c.c_guid = a.guid WHERE c.o_guid = %d", c.getGuid());
         
         Packet p;
@@ -176,8 +185,6 @@ public class Session implements Runnable, Opcode
     
     void HandleLogoutOpcode(/* Packet packet */) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_LOGOUT\n");
-        
         SendPacket(new Packet(SMSG_LOGOUT_COMPLETE));
         
         Logout();
@@ -185,8 +192,6 @@ public class Session implements Runnable, Opcode
     
     void HandleStatusChangedOpcode(Packet packet) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_STATUS_CHANGED\n");
-        
         int toStatus = (int)packet.get();
         
         c.setStatus(toStatus);
@@ -208,8 +213,6 @@ public class Session implements Runnable, Opcode
     
     void HandleAddContactOpcode(Packet packet) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_ADD_CONTACT\n");
-        
         String username = (String)packet.get();
         
         // Contact to add is self
@@ -304,8 +307,6 @@ public class Session implements Runnable, Opcode
     
     void HandleContactAcceptOpcode(Packet packet) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_CONTACT_ACCEPT\n");
-        
         int guid = (int)packet.get();
         
         Main.db.execute("DELETE FROM contact_request WHERE o_guid = %d and r_guid = %d", c.getGuid(), guid);
@@ -336,8 +337,6 @@ public class Session implements Runnable, Opcode
     
     void HandleContactDeclineOpcode(Packet packet) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_CONTACT_DECLINE\n");
-        
         int guid = (int)packet.get();
         
         Main.db.execute("DELETE FROM contact_request WHERE o_guid = %d and r_guid = %d", c.getGuid(), guid);
@@ -345,8 +344,6 @@ public class Session implements Runnable, Opcode
     
     void HandleRemoveContactOpcode(Packet packet) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_REMOVE_CONTACT\n");
-        
         int guid = (int)packet.get();
         
         Main.db.execute("DELETE FROM contact WHERE o_guid = %d AND c_guid = %d", c.getGuid(), guid);
@@ -359,12 +356,10 @@ public class Session implements Runnable, Opcode
     
     void HandleChatMessageOpcode(Packet packet) throws Exception
     {
-        System.out.printf("\nOpcode: CMSG_SEND_CHAT_MESSAGE\n");
-                        
         int from = c.getGuid();
         int to = (int)packet.get();
         String message = (String)packet.get();
-                        
+        
         System.out.printf("Chat Message Receive From: %d, To %d, Message: %s\n", from, to, message);
         
         Client target = Main.clientList.findClient(to);
@@ -385,8 +380,6 @@ public class Session implements Runnable, Opcode
     
     void HandleTimeSyncRespOpcode(Packet packet)
     {
-        System.out.printf("\nOpcode: CMSG_TIME_SYNC_RESP\n");
-        
         int counter = (int)packet.get();
         long ticks = (long)packet.get();
         
@@ -412,7 +405,6 @@ public class Session implements Runnable, Opcode
     
     void HandlePingOpcode(/* Packet packet */)
     {
-        System.out.printf("\nOpcode: CMSG_PING\n");
         int latency = (int)(System.currentTimeMillis() - pingTicks);
         
         System.out.printf("From client: %s (guid: %d), latency: %dms\n", c.getUsername(), c.getGuid(), latency);

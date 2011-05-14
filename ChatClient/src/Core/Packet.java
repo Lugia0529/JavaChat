@@ -43,4 +43,14 @@ public class Packet<PacketData> implements Serializable
         else
             return null;
     }
+    
+    public int size()
+    {
+        return packet.size();
+    }
+    
+    public int getCurrentPosition()
+    {
+        return pointer;
+    }
 }
