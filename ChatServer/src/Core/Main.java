@@ -73,9 +73,13 @@ public class Main implements Opcode
                             db.execute("UPDATE account SET online = 1 WHERE guid = %d", c.getGuid());
                             
                             System.out.printf("Send Opcode: SMSG_LOGIN_SUCESS\n");
+                            
                             Packet p = new Packet(SMSG_LOGIN_SUCCESS);
+                            p.put(c.getGuid());
+                            p.put(c.getUsername());
                             p.put(c.getTitle());
                             p.put(c.getPSM());
+                            p.put(c.getStatus());
                             
                             c.getSession().SendPacket(p);
                             

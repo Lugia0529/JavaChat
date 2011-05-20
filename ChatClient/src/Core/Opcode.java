@@ -26,4 +26,8 @@ public interface Opcode
     final byte CMSG_PING                    = 0x16;
     final byte SMSG_PING                    = 0x17;
     final byte SMSG_LOGOUT_COMPLETE         = 0x18;
+    final byte CMSG_TITLE_CHANGED           = 0x19;
+    final byte SMSG_TITLE_CHANGED           = 0x1A;
+    final byte CMSG_PSM_CHANGED             = 0x1B;
+    final byte SMSG_PSM_CHANGED             = 0x1C;
 }

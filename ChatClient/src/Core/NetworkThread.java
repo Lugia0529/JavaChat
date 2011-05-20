@@ -93,6 +93,10 @@ public class NetworkThread implements Runnable, Opcode
                     case SMSG_PING:
                         NetworkManager.SendPacket(new Packet(CMSG_PING));
                         break;
+                    case SMSG_TITLE_CHANGED:
+                    case SMSG_PSM_CHANGED:
+                        HandleContactDetailChangedOpcode(p);
+                        break;
                     case SMSG_LOGOUT_COMPLETE:
                         NetworkManager.logout();
                         break;
@@ -132,7 +136,7 @@ public class NetworkThread implements Runnable, Opcode
         ChatUI targetUI = UIManager.getChatUIList().findUI(s_contact);
         
         if (targetUI == null)
-            UIManager.getChatUIList().add(targetUI = new ChatUI(s_contact, UIManager.getMasterUI().getAccountTitle()));
+            UIManager.getChatUIList().add(targetUI = new ChatUI(s_contact, UIManager.getMasterUI().getAccountDetail().getTitle()));
         
         // Output the message in sender ChatUI.
         targetUI.append(s_contact.getTitle(), message);
@@ -166,6 +170,17 @@ public class NetworkThread implements Runnable, Opcode
         String r_username = (String)packet.get();
         
         new ContactRequestUI(r_guid, r_username);
+    }
+    
+    void HandleContactDetailChangedOpcode(Packet packet)
+    {
+        int guid = (int)packet.get();
+        String data = (String)packet.get();
+        
+        if (packet.getOpcode() == SMSG_TITLE_CHANGED)
+            UIManager.getMasterUI().UpdateContactDetail(guid, data, null);
+        else if (packet.getOpcode() == SMSG_PSM_CHANGED)
+            UIManager.getMasterUI().UpdateContactDetail(guid, null, data);
     }
     
     class PeriodicTimeSyncResp extends TimerTask 

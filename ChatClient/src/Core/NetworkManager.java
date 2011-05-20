@@ -52,12 +52,15 @@ public class NetworkManager implements Opcode
             switch(p.getOpcode())
             {
                 case SMSG_LOGIN_SUCCESS: /* Login is success */
-                    String name = (String)p.get();
-                    String psm = (String)p.get();
+                    int accountGuid = (int)p.get();
+                    String accountUsername = (String)p.get();
+                    String accountTitle = (String)p.get();
+                    String accountPSM = (String)p.get();
+                    int accountStatus = (int)p.get();
                     
                     new Thread(new NetworkThread()).start();
                     
-                    UIManager.getMasterUI().setAccountInfo(name, psm);
+                    UIManager.getMasterUI().setAccountDetail(accountGuid, accountUsername, accountTitle, accountPSM, accountStatus);
                     UIManager.switchUI();
                     break;
                 case SMSG_LOGIN_FAILED: /* Login failed */
@@ -101,6 +104,7 @@ public class NetworkManager implements Opcode
         UIManager.getChatUIList().disposeAllUI();
         UIManager.getMasterUI().setTitle("Login");
         UIManager.getMasterUI().enableLoginInput(true);
+        UIManager.getMasterUI().clearAccountDetail();
     }
     
     public static void getContactList()

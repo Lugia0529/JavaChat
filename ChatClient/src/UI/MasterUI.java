@@ -1,13 +1,19 @@
 package UI;
 
+import Core.AccountDetail;
 import Core.Contact;
 import Core.NetworkManager;
 import Core.Opcode;
 import Core.Packet;
 import Core.UIManager;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -28,6 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+
 
 public class MasterUI extends JFrame implements Opcode
 {
@@ -51,8 +58,11 @@ public class MasterUI extends JFrame implements Opcode
     private JList contactList;
     private JScrollPane contactListPane;
     
-    private JLabel lblName;
+    private JLabel lblTitle;
     private JLabel lblPSM;
+    
+    private JTextField txtTitle;
+    private JTextField txtPSM;
     
     private JButton btnAddContact;
     private JButton btnRemoveContact;
@@ -61,8 +71,7 @@ public class MasterUI extends JFrame implements Opcode
     
     private String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
     
-    private String accountTitle;
-    private String accountPSM;
+    private AccountDetail accountContact;
     
     public MasterUI()
     {
@@ -100,8 +109,11 @@ public class MasterUI extends JFrame implements Opcode
         btnExit.setBounds(140, 420, 100, 25);
         
         /* Contact List Interface */
-        lblName = new JLabel();
+        lblTitle = new JLabel();
         lblPSM = new JLabel();
+        
+        txtTitle = new JTextField();
+        txtPSM = new JTextField();
         
         cStatus = new JComboBox(status);
         
@@ -112,15 +124,19 @@ public class MasterUI extends JFrame implements Opcode
         contactList = new JList(model);
         contactListPane = new JScrollPane(contactList);
         
-        contactPanel.add(lblName);
+        contactPanel.add(lblTitle);
+        contactPanel.add(txtTitle);
         contactPanel.add(lblPSM);
+        contactPanel.add(txtPSM);
         contactPanel.add(cStatus);
         contactPanel.add(btnAddContact);
         contactPanel.add(btnRemoveContact);
         contactPanel.add(contactListPane);
         
-        lblName.setBounds(15, 10, 245, 25);
-        lblPSM.setBounds(15, 35, 245, 25);
+        lblTitle.setBounds(15, 10, 240, 25);
+        txtTitle.setBounds(15, 10, 240, 25);
+        lblPSM.setBounds(15, 35, 240, 25);
+        txtPSM.setBounds(15, 35, 240, 25);
         cStatus.setBounds(10, 65, 245, 25);
         btnAddContact.setBounds(10, 100, 120, 25);
         btnRemoveContact.setBounds(135, 100, 120, 25);
@@ -128,6 +144,12 @@ public class MasterUI extends JFrame implements Opcode
         
         loginPanel.setBounds(0, 0, 270, 500);
         contactPanel.setBounds(270 , 0, 270, 500);
+        
+        lblTitle.setFont(new Font("sansserif", Font.BOLD, 16));
+        lblPSM.setFont(new Font("sansserif", Font.PLAIN, 12));
+        
+        txtTitle.setVisible(false);
+        txtPSM.setVisible(false);
         
         add(loginPanel);
         add(contactPanel);
@@ -144,28 +166,48 @@ public class MasterUI extends JFrame implements Opcode
         btnAddContact.addActionListener(actListener);
         btnRemoveContact.addActionListener(actListener);
         
+        txtTitle.addFocusListener(focusListener);
+        txtPSM.addFocusListener(focusListener);
+        
         txtUsername.addKeyListener(loginKeyListener);
         txtPassword.addKeyListener(loginKeyListener);
         
+        txtTitle.addKeyListener(contactKeyListener);
+        txtPSM.addKeyListener(contactKeyListener);
+        
+        lblTitle.addMouseListener(mouseListener);
+        lblPSM.addMouseListener(mouseListener);
         contactList.addMouseListener(mouseListener);
         
         addWindowListener(winListener);
     }
     
-    public String getAccountTitle()
+    public void setAccountDetail(int guid, String username, String title, String psm, int status)
     {
-        return this.accountTitle;
+        this.accountContact = new AccountDetail(guid, username, title, psm, status);
+        
+        lblTitle.setText(accountContact.getTitle());
+        
+        lblPSM.setText(psm.equals("") ? "<Click to type a personal message>" : psm);
+        lblPSM.setFont(new Font("sansserif", psm.equals("") ? Font.ITALIC : Font.PLAIN, 12));
+        lblPSM.setForeground(psm.equals("") ? Color.GRAY : Color.BLACK);
+        
+        updateUITitle();
     }
     
-    public void setAccountInfo(String accountTitle, String accountPSM)
+    public AccountDetail getAccountDetail()
     {
-        this.accountTitle = accountTitle;
-        this.accountPSM = accountPSM;
-        
-        lblName.setText(accountTitle);
-        lblPSM.setText(accountPSM);
-        
-        setTitle(String.format("%s - %s", accountTitle, accountPSM));
+        return this.accountContact;
+    }
+    
+    public void clearAccountDetail()
+    {
+        this.accountContact = null;
+    }
+    
+    public void updateUITitle()
+    {
+        setTitle(accountContact.getUITitle());
     }
     
     public void enableLoginInput(boolean enable)
@@ -199,6 +241,26 @@ public class MasterUI extends JFrame implements Opcode
         }
     }
     
+    public void UpdateContactDetail(int guid, String title, String psm)
+    {
+        Contact c = searchContact(guid);
+        ChatUI ui = UIManager.getChatUIList().findUI(c);
+        
+        if (c != null)
+        {
+            if (title != null)
+                c.setTitle(title);
+            
+            if (psm != null)
+                c.setPSM(psm);
+            
+            contactList.repaint();
+        }
+        
+        if (ui != null)
+            ui.UpdateTitle();
+    }
+    
     public void login()
     {
         enableLoginInput(false);
@@ -229,7 +291,7 @@ public class MasterUI extends JFrame implements Opcode
         else
         {
             model.clear();
-            lblName.setText("");
+            lblTitle.setText("");
             lblPSM.setText("");
             cStatus.setSelectedIndex(0);
         }
@@ -293,6 +355,28 @@ public class MasterUI extends JFrame implements Opcode
         }
     };
     
+    FocusListener focusListener = new FocusAdapter()
+    {
+        public void focusLost(FocusEvent e)
+        {
+            if (e.getSource().equals(txtTitle))
+            {
+                txtTitle.setVisible(false);
+                lblTitle.setVisible(true);
+                
+                return;
+            }
+            
+            if (e.getSource().equals(txtPSM))
+            {
+                txtPSM.setVisible(false);
+                lblPSM.setVisible(true);
+                
+                return;
+            }
+        }
+    };
+    
     KeyListener loginKeyListener = new KeyAdapter()
     {
         public void keyReleased(KeyEvent e)
@@ -300,13 +384,103 @@ public class MasterUI extends JFrame implements Opcode
             // Only handle enter key in Chat Interface.
             if (e.getKeyCode() == KeyEvent.VK_ENTER)
                 login();
-        }   
+        }
+    };
+    
+    KeyListener contactKeyListener = new KeyAdapter()
+    {
+        public void keyPressed(KeyEvent e)
+        {
+            if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
+            {
+                if (e.getSource().equals(txtTitle))
+                {
+                    txtTitle.setVisible(false);
+                    lblTitle.setVisible(true);
+                    
+                    return;
+                }
+                
+                if (e.getSource().equals(txtPSM))
+                {
+                    txtPSM.setVisible(false);
+                    lblPSM.setVisible(true);
+                    
+                    return;
+                }
+            }
+            
+            if (e.getKeyCode() == KeyEvent.VK_ENTER)
+            {
+                if (e.getSource().equals(txtTitle))
+                {
+                    String newTitle = txtTitle.getText().trim();
+                    
+                    if (!newTitle.equals(accountContact.getOriginalTitle()))
+                    {
+                        accountContact.setTitle(newTitle);
+                        
+                        lblTitle.setText(accountContact.getTitle());
+                        
+                        Packet p = new Packet(CMSG_TITLE_CHANGED);
+                        p.put(newTitle);
+                        
+                        NetworkManager.SendPacket(p);
+                    }
+                    
+                    txtTitle.setVisible(false);
+                    lblTitle.setVisible(true);
+                }
+                
+                if (e.getSource().equals(txtPSM))
+                {
+                    String newPSM = txtPSM.getText().trim();
+                    
+                    if (!newPSM.equals(accountContact.getPSM()))
+                    {
+                        accountContact.setPSM(newPSM);
+                        
+                        lblPSM.setText(newPSM.equals("") ? "<Click to type a personal message>" : newPSM);
+                        lblPSM.setFont(new Font("sansserif", newPSM.equals("") ? Font.ITALIC : Font.PLAIN, 12));
+                        lblPSM.setForeground(newPSM.equals("") ? Color.GRAY : Color.BLACK);
+                        
+                        Packet p = new Packet(CMSG_PSM_CHANGED);
+                        p.put(newPSM);
+                        
+                        NetworkManager.SendPacket(p);
+                    }
+                    
+                    txtPSM.setVisible(false);
+                    lblPSM.setVisible(true);
+                }
+                
+                updateUITitle();
+            }
+        }
     };
     
     MouseListener mouseListener = new MouseAdapter()
     {
         public void mouseClicked(MouseEvent e)
         {
+            if (e.getSource().equals(lblTitle))
+            {
+                lblTitle.setVisible(false);
+                txtTitle.setVisible(true);
+                
+                txtTitle.setText(accountContact.getOriginalTitle());
+                txtTitle.requestFocusInWindow();
+            }
+            
+            if (e.getSource().equals(lblPSM))
+            {
+                lblPSM.setVisible(false);
+                txtPSM.setVisible(true);
+                
+                txtPSM.setText(accountContact.getPSM());
+                txtPSM.requestFocusInWindow();
+            }
+            
             // Handle double click event of contact list.
             // Open contact ChatUI when client is double click on contact detail.
             if (e.getClickCount() == 2)
@@ -321,11 +495,11 @@ public class MasterUI extends JFrame implements Opcode
                 {
                     if (ui.getState() == JFrame.ICONIFIED)
                         ui.setState(JFrame.NORMAL);
-                        
+                    
                     ui.toFront();
                 }
                 else
-                    UIManager.getChatUIList().add(new ChatUI(c, accountTitle));
+                    UIManager.getChatUIList().add(new ChatUI(c, accountContact.getTitle()));
             }
         }
     };

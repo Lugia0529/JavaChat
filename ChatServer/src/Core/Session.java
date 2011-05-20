@@ -415,6 +415,52 @@ public class Session implements Runnable, Opcode
         timer.schedule(new PeriodicLatencyCheck(), 30 * 1000);
     }
     
+    void HandleClientDetailChangedOpcode(Packet packet) throws Exception
+    {
+        String data = (String)packet.get();
+        String str = null;
+        Packet p = null;
+        
+        if (packet.getOpcode() == CMSG_TITLE_CHANGED)
+        {
+            str = "title";
+            p = new Packet(SMSG_TITLE_CHANGED);
+            c.setTitle(data);
+        }
+        else if (packet.getOpcode() == CMSG_PSM_CHANGED)
+        {
+            str = "psm";
+            p = new Packet(SMSG_PSM_CHANGED);
+            c.setPSM(data);
+        }
+        else
+        {
+            System.out.printf("Opcode 0x%02X shouldn't be process in this handler!", packet.getOpcode());
+            return;
+        }
+        
+        System.out.printf("Client %d change %s to %s.\n", c.getGuid(), str, data);
+        Main.db.execute("UPDATE account SET %s = '%s' WHERE guid = '%d'", str, data, c.getGuid());
+        
+        p.put(c.getGuid());
+        p.put(data);
+        
+        ResultSet rs = Main.db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
+        
+        while(rs.next())
+        {
+            int guid = rs.getInt(1);
+            
+            Client target = Main.clientList.findClient(guid);
+            
+            if (target != null)
+            {
+                System.out.printf("Send %s change From: %d, To: %d, Data: %s\n", str, c.getGuid(), guid, data);
+                target.getSession().SendPacket(p);
+            }
+        }
+    }
+    
     void SendStatusChanged(int guid, int status) throws Exception
     {
         System.out.printf("Send status change From: %d, To: %d, Status: %d\n", guid, c.getGuid(), status);
