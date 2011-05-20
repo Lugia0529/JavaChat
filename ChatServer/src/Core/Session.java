@@ -192,7 +192,7 @@ public class Session implements Runnable, Opcode
     
     void HandleStatusChangedOpcode(Packet packet) throws Exception
     {
-        int toStatus = (int)packet.get();
+        int toStatus = (Integer)packet.get();
         
         c.setStatus(toStatus);
         
@@ -307,7 +307,7 @@ public class Session implements Runnable, Opcode
     
     void HandleContactAcceptOpcode(Packet packet) throws Exception
     {
-        int guid = (int)packet.get();
+        int guid = (Integer)packet.get();
         
         Main.db.execute("DELETE FROM contact_request WHERE o_guid = %d and r_guid = %d", c.getGuid(), guid);
         Main.db.execute("INSERT INTO contact(o_guid, c_guid) VALUES(%d, %d)", c.getGuid(), guid);
@@ -337,14 +337,14 @@ public class Session implements Runnable, Opcode
     
     void HandleContactDeclineOpcode(Packet packet) throws Exception
     {
-        int guid = (int)packet.get();
+        int guid = (Integer)packet.get();
         
         Main.db.execute("DELETE FROM contact_request WHERE o_guid = %d and r_guid = %d", c.getGuid(), guid);
     }
     
     void HandleRemoveContactOpcode(Packet packet) throws Exception
     {
-        int guid = (int)packet.get();
+        int guid = (Integer)packet.get();
         
         Main.db.execute("DELETE FROM contact WHERE o_guid = %d AND c_guid = %d", c.getGuid(), guid);
         
@@ -357,7 +357,7 @@ public class Session implements Runnable, Opcode
     void HandleChatMessageOpcode(Packet packet) throws Exception
     {
         int from = c.getGuid();
-        int to = (int)packet.get();
+        int to = (Integer)packet.get();
         String message = (String)packet.get();
         
         System.out.printf("Chat Message Receive From: %d, To %d, Message: %s\n", from, to, message);
@@ -380,8 +380,8 @@ public class Session implements Runnable, Opcode
     
     void HandleTimeSyncRespOpcode(Packet packet)
     {
-        int counter = (int)packet.get();
-        long ticks = (long)packet.get();
+        int counter = (Integer)packet.get();
+        long ticks = (Long)packet.get();
         
         System.out.printf("From Client: %s (guid: %d)\n", c.getUsername(), c.getGuid());
         

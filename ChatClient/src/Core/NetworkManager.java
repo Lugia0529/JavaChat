@@ -52,11 +52,11 @@ public class NetworkManager implements Opcode
             switch(p.getOpcode())
             {
                 case SMSG_LOGIN_SUCCESS: /* Login is success */
-                    int accountGuid = (int)p.get();
+                    int accountGuid = (Integer)p.get();
                     String accountUsername = (String)p.get();
                     String accountTitle = (String)p.get();
                     String accountPSM = (String)p.get();
-                    int accountStatus = (int)p.get();
+                    int accountStatus = (Integer)p.get();
                     
                     new Thread(new NetworkThread()).start();
                     

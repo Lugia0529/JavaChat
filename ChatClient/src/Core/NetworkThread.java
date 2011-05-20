@@ -41,11 +41,11 @@ public class NetworkThread implements Runnable, Opcode
                 if (p.getOpcode() != SMSG_CONTACT_DETAIL)
                     break;
                 
-                int guid = (int)p.get();
+                int guid = (Integer)p.get();
                 String c_username = (String)p.get();
                 String c_title = (String)p.get();
                 String c_psm = (String)p.get();
-                int c_status = (int)p.get();
+                int c_status = (Integer)p.get();
                 
                 Contact c = new Contact(guid, c_username, c_title, c_psm, c_status);
                 
@@ -120,7 +120,7 @@ public class NetworkThread implements Runnable, Opcode
     
     void HandleChatMessageOpcode(Packet packet)
     {
-        int senderGuid = (int)packet.get();
+        int senderGuid = (Integer)packet.get();
         String message = (String)packet.get();
         
         Contact s_contact = null;
@@ -145,19 +145,19 @@ public class NetworkThread implements Runnable, Opcode
     
     void HandleStatusChangedOpcode(Packet packet)
     {
-        int guid = (int)packet.get();
-        int status = (int)packet.get();
+        int guid = (Integer)packet.get();
+        int status = (Integer)packet.get();
         
         UIManager.UpdateContactStatus(guid, status);
     }
     
     void HandleAddContactSuccessOpcode(Packet packet)
     {
-        int guid = (int)packet.get();
+        int guid = (Integer)packet.get();
         String username = (String)packet.get();
         String title = (String)packet.get();
         String psm = (String)packet.get();
-        int c_status = (int)packet.get();
+        int c_status = (Integer)packet.get();
        
         Contact c = new Contact(guid, username, title, psm, c_status);
        
@@ -166,7 +166,7 @@ public class NetworkThread implements Runnable, Opcode
 
     void HandleContactRequestOpcode(Packet packet)
     {
-        int r_guid = (int)packet.get();
+        int r_guid = (Integer)packet.get();
         String r_username = (String)packet.get();
         
         new ContactRequestUI(r_guid, r_username);
@@ -174,7 +174,7 @@ public class NetworkThread implements Runnable, Opcode
     
     void HandleContactDetailChangedOpcode(Packet packet)
     {
-        int guid = (int)packet.get();
+        int guid = (Integer)packet.get();
         String data = (String)packet.get();
         
         if (packet.getOpcode() == SMSG_TITLE_CHANGED)
