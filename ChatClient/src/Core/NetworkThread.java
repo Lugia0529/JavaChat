@@ -68,13 +68,13 @@ public class NetworkThread implements Runnable, Opcode
                 
                 Contact c = new Contact(guid, c_username, c_title, c_psm, c_status);
                 
-                UIManager.getMasterUI().addContact(c);
+                UICore.getMasterUI().addContact(c);
             }
             
             // The server will send SMSG_CONTACT_LIST_ENDED signal to inform client that all client data is sent.
             // If the client receive signal other than SMSG_CONTACT_LIST_ENDED, the client may miss some contact data while receiving.
             if (p.getOpcode() != SMSG_CONTACT_LIST_ENDED)
-                UIManager.showMessageDialog("Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
+                UICore.showMessageDialog("Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
             
             // Tell the server the current status of client. Will be useful in login as this status when it is implemented.
             Packet statusPacket = new Packet(CMSG_STATUS_CHANGED);
@@ -98,10 +98,10 @@ public class NetworkThread implements Runnable, Opcode
                         HandleStatusChangedOpcode(p);
                         break;
                     case SMSG_CONTACT_ALREADY_IN_LIST:
-                        UIManager.showMessageDialog("The contact is already in list.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
+                        UICore.showMessageDialog("The contact is already in list.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
                         break;
                     case SMSG_CONTACT_NOT_FOUND:
-                        UIManager.showMessageDialog("No such user found.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
+                        UICore.showMessageDialog("No such user found.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
                         break;
                     case SMSG_ADD_CONTACT_SUCCESS:
                         HandleAddContactSuccessOpcode(p);
@@ -126,19 +126,19 @@ public class NetworkThread implements Runnable, Opcode
         {
             NetworkManager.logout();
             
-            UIManager.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
         }
         catch (SocketException se)
         {
             NetworkManager.logout();
             
-            UIManager.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
         }
         catch (SocketTimeoutException ste)
         {
             NetworkManager.logout();
             
-            UIManager.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
         }
         catch (Exception e) {}
     }
@@ -152,16 +152,16 @@ public class NetworkThread implements Runnable, Opcode
         
         // Search contact list have this contact detail or not.
         // This help the client to deny chat message if the contact is deleted.
-        s_contact = UIManager.getMasterUI().searchContact(senderGuid);
+        s_contact = UICore.getMasterUI().searchContact(senderGuid);
         
         // Cant find sender contact detail in list. Possible deleted.
         if (s_contact == null)
             return;
         
-        ChatUI targetUI = UIManager.getChatUIList().findUI(s_contact);
+        ChatUI targetUI = UICore.getChatUIList().findUI(s_contact);
         
         if (targetUI == null)
-            UIManager.getChatUIList().add(targetUI = new ChatUI(s_contact, UIManager.getMasterUI().getAccountDetail().getTitle()));
+            UICore.getChatUIList().add(targetUI = new ChatUI(s_contact, UICore.getMasterUI().getAccountDetail().getTitle()));
         
         // Output the message in sender ChatUI.
         targetUI.append(s_contact.getTitle(), message);
@@ -173,7 +173,7 @@ public class NetworkThread implements Runnable, Opcode
         int guid = (Integer)packet.get();
         int status = (Integer)packet.get();
         
-        UIManager.UpdateContactStatus(guid, status);
+        UICore.UpdateContactStatus(guid, status);
     }
     
     void HandleAddContactSuccessOpcode(Packet packet)
@@ -186,7 +186,7 @@ public class NetworkThread implements Runnable, Opcode
        
         Contact c = new Contact(guid, username, title, psm, c_status);
        
-        UIManager.getMasterUI().addContact(c);
+        UICore.getMasterUI().addContact(c);
     }
 
     void HandleContactRequestOpcode(Packet packet)
@@ -203,9 +203,9 @@ public class NetworkThread implements Runnable, Opcode
         String data = (String)packet.get();
         
         if (packet.getOpcode() == SMSG_TITLE_CHANGED)
-            UIManager.getMasterUI().UpdateContactDetail(guid, data, null);
+            UICore.getMasterUI().UpdateContactDetail(guid, data, null);
         else if (packet.getOpcode() == SMSG_PSM_CHANGED)
-            UIManager.getMasterUI().UpdateContactDetail(guid, null, data);
+            UICore.getMasterUI().UpdateContactDetail(guid, null, data);
     }
     
     class PeriodicTimeSyncResp extends TimerTask 

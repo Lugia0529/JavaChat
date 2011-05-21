@@ -17,10 +17,13 @@
 
 package Core;
 
+import javax.swing.UIManager;
+
 public class Main
 {
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
-        UIManager.initiate();
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        UICore.initiate();
     }
 }

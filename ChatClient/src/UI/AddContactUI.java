@@ -20,7 +20,7 @@ package UI;
 import Core.NetworkManager;
 import Core.Opcode;
 import Core.Packet;
-import Core.UIManager;
+import Core.UICore;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -69,7 +69,7 @@ public class AddContactUI extends JFrame implements Opcode
         
         setSize(300, 170);
         setResizable(false);
-        setLocationRelativeTo(UIManager.getMasterUI());
+        setLocationRelativeTo(UICore.getMasterUI());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
     }

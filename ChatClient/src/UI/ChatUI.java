@@ -21,7 +21,7 @@ import Core.Contact;
 import Core.NetworkManager;
 import Core.Opcode;
 import Core.Packet;
-import Core.UIManager;
+import Core.UICore;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -97,7 +97,7 @@ public final class ChatUI extends JFrame implements Opcode
     
     public void close()
     {
-        UIManager.getChatUIList().remove(this);
+        UICore.getChatUIList().remove(this);
     }
     
     KeyListener keyListener = new KeyAdapter()

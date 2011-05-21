@@ -22,7 +22,7 @@ import Core.Contact;
 import Core.NetworkManager;
 import Core.Opcode;
 import Core.Packet;
-import Core.UIManager;
+import Core.UICore;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -261,7 +261,7 @@ public class MasterUI extends JFrame implements Opcode
     public void UpdateContactDetail(int guid, String title, String psm)
     {
         Contact c = searchContact(guid);
-        ChatUI ui = UIManager.getChatUIList().findUI(c);
+        ChatUI ui = UICore.getChatUIList().findUI(c);
         
         if (c != null)
         {
@@ -284,14 +284,14 @@ public class MasterUI extends JFrame implements Opcode
         
         if (txtUsername.getText().equals(""))
         {
-            UIManager.showMessageDialog("Please enter your username.", "Error", JOptionPane.ERROR_MESSAGE);
+            UICore.showMessageDialog("Please enter your username.", "Error", JOptionPane.ERROR_MESSAGE);
             enableLoginInput(true);
             return;
         }
         
         if (txtPassword.getPassword().length == 0)
         {
-            UIManager.showMessageDialog("Please enter your password.", "Error", JOptionPane.ERROR_MESSAGE);
+            UICore.showMessageDialog("Please enter your password.", "Error", JOptionPane.ERROR_MESSAGE);
             enableLoginInput(true);
             return;
         }
@@ -335,12 +335,12 @@ public class MasterUI extends JFrame implements Opcode
                         return;
                     
                     Contact c = (Contact)model.getElementAt(contactList.getSelectedIndex());
-                    ChatUI chatUI = UIManager.getChatUIList().findUI(c);
+                    ChatUI chatUI = UICore.getChatUIList().findUI(c);
                     
                     int guid = c.getGuid();
                     
                     if (chatUI != null)
-                        UIManager.getChatUIList().remove(chatUI);
+                        UICore.getChatUIList().remove(chatUI);
                     
                     
                     Packet p = new Packet(CMSG_REMOVE_CONTACT);
@@ -506,7 +506,7 @@ public class MasterUI extends JFrame implements Opcode
                 int index = contactList.locationToIndex(e.getPoint());
                 Contact c = (Contact)model.getElementAt(index);
                 
-                ChatUI ui = UIManager.getChatUIList().findUI(c);
+                ChatUI ui = UICore.getChatUIList().findUI(c);
                 
                 if (ui != null)
                 {
@@ -516,7 +516,7 @@ public class MasterUI extends JFrame implements Opcode
                     ui.toFront();
                 }
                 else
-                    UIManager.getChatUIList().add(new ChatUI(c, accountContact.getTitle()));
+                    UICore.getChatUIList().add(new ChatUI(c, accountContact.getTitle()));
             }
         }
     };
@@ -550,7 +550,7 @@ public class MasterUI extends JFrame implements Opcode
                 catch(Exception e) {}
             }
             
-            UIManager.getMasterUI().resetUI();
+            UICore.getMasterUI().resetUI();
             
             isLoginUI = !isLoginUI;
         }

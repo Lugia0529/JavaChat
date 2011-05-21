@@ -23,12 +23,12 @@ import UI.MasterUI.UISwitcher;
 
 import javax.swing.JOptionPane;
 
-public class UIManager
+public class UICore
 {
     private static MasterUI ui;
     public static ChatUIList chatList;
     
-    public UIManager()
+    public UICore()
     {
     }
     
@@ -54,7 +54,7 @@ public class UIManager
         
         if (c != null)
         {
-            UIManager.getMasterUI().UpdateContactStatus(guid, status);
+            UICore.getMasterUI().UpdateContactStatus(guid, status);
             
             ChatUI chatUI =  getChatUIList().findUI(c);
             

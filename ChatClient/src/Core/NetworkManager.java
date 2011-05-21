@@ -77,38 +77,38 @@ public class NetworkManager implements Opcode
                     
                     new Thread(new NetworkThread()).start();
                     
-                    UIManager.getMasterUI().setAccountDetail(accountGuid, accountUsername, accountTitle, accountPSM, accountStatus);
-                    UIManager.switchUI();
+                    UICore.getMasterUI().setAccountDetail(accountGuid, accountUsername, accountTitle, accountPSM, accountStatus);
+                    UICore.switchUI();
                     break;
                 case SMSG_LOGIN_FAILED: /* Login failed */
                     NetworkManager.destroy();
                     
-                    UIManager.showMessageDialog("The infomation you entered is not valid.", "Login Failed", JOptionPane.ERROR_MESSAGE);
-                    UIManager.getMasterUI().enableLoginInput(true);
+                    UICore.showMessageDialog("The infomation you entered is not valid.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                    UICore.getMasterUI().enableLoginInput(true);
                     
                     break;
                 case SMSG_MULTI_LOGIN: /* Account is already login on other computer. */
                     NetworkManager.destroy();
                     
-                    UIManager.showMessageDialog("Your account is currently logged in on another computer. To log in here, please log out from the other computer.", "Login Failed", JOptionPane.ERROR_MESSAGE);
-                    UIManager.getMasterUI().enableLoginInput(true);
+                    UICore.showMessageDialog("Your account is currently logged in on another computer. To log in here, please log out from the other computer.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                    UICore.getMasterUI().enableLoginInput(true);
                     
                     break;
                 default: /* Server problem? */
-                    UIManager.showMessageDialog("Unknown error occur, please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
-                    UIManager.getMasterUI().enableLoginInput(true);
+                    UICore.showMessageDialog("Unknown error occur, please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
+                    UICore.getMasterUI().enableLoginInput(true);
                     break;
             }
         }
         catch (IOException ioe)
         {
-            UIManager.showMessageDialog("Unable to connect to server. Please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
-            UIManager.getMasterUI().enableLoginInput(true);
+            UICore.showMessageDialog("Unable to connect to server. Please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
+            UICore.getMasterUI().enableLoginInput(true);
         }
         catch (Exception e)
         {
-            UIManager.showMessageDialog("Unknown error occur, please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
-            UIManager.getMasterUI().enableLoginInput(true);
+            UICore.showMessageDialog("Unknown error occur, please try again later.", "Error", JOptionPane.ERROR_MESSAGE);
+            UICore.getMasterUI().enableLoginInput(true);
         }
     }
     
@@ -117,11 +117,11 @@ public class NetworkManager implements Opcode
         NetworkThread.stop();
         destroy();
         
-        UIManager.switchUI();
-        UIManager.getChatUIList().disposeAllUI();
-        UIManager.getMasterUI().setTitle("Login");
-        UIManager.getMasterUI().enableLoginInput(true);
-        UIManager.getMasterUI().clearAccountDetail();
+        UICore.switchUI();
+        UICore.getChatUIList().disposeAllUI();
+        UICore.getMasterUI().setTitle("Login");
+        UICore.getMasterUI().enableLoginInput(true);
+        UICore.getMasterUI().clearAccountDetail();
     }
     
     public static void getContactList()
