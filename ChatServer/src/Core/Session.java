@@ -17,6 +17,7 @@
 
 package Core;
 
+import java.io.EOFException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -121,6 +122,12 @@ public class Session implements Runnable, Opcode
                     System.out.printf("Client %s (guid: %d) send a packet with wrong structure. (Attemp to crash server?)", c.getUsername(), c.getGuid());
                 else
                     System.out.printf("Unhandler exception occur while processing packet data.\nException message: %s\n", ite.getCause());
+            }
+            catch (EOFException eof)
+            {
+                System.out.printf("\nClient %s (guid: %d) unexpected EOF while waiting for packet. (possible disconnected?)\n", c.getUsername(), c.getGuid());
+                
+                Logout();
             }
             catch (SocketException se)
             {

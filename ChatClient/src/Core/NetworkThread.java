@@ -19,6 +19,8 @@ package Core;
 
 import UI.ChatUI;
 import UI.ContactRequestUI;
+
+import java.io.EOFException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Timer;
@@ -119,6 +121,12 @@ public class NetworkThread implements Runnable, Opcode
                         break;
                 }
             }
+        }
+        catch (EOFException eof)
+        {
+            NetworkManager.logout();
+            
+            UIManager.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
         }
         catch (SocketException se)
         {
