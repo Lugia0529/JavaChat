@@ -5,3 +5,7 @@ README.TXT
 /ChatClient/dist/
 /ChatServer/nbproject/private/
 /ChatClient/nbproject/private/
+/ChatServer/.settings/
+/ChatServer/bin/
+/ChatClient/.settings/
+/ChatClient/bin/
