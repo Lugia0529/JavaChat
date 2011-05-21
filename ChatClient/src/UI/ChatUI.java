@@ -105,7 +105,7 @@ public final class ChatUI extends JFrame implements Opcode
         public void keyReleased(KeyEvent e)
         {
             // Only handle enter key in Chat Interface.
-            if (e.getKeyCode() == e.VK_ENTER)
+            if (e.getKeyCode() == KeyEvent.VK_ENTER)
             {
                 // Shift + Enter = next line.
                 if (e.isShiftDown())
