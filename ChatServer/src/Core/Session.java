@@ -65,11 +65,11 @@ public class Session implements Runnable, Opcode
     
     public void run()
     {
-        try
+        this.session = Thread.currentThread();
+        
+        while(session == Thread.currentThread())
         {
-            this.session = Thread.currentThread();
-            
-            while(session == Thread.currentThread())
+            try
             {
                 Packet p = ReceivePacket();
                 
@@ -109,36 +109,38 @@ public class Session implements Runnable, Opcode
                 {
                     System.out.printf("Processing is not require for this packet.\n");
                     continue;
+                    
                 }
             }
+            catch (InvocationTargetException ite)
+            {
+                // Throw when an exception occur while processing packet.
+                Throwable t = ite.getCause();
+                
+                if (t instanceof ClassCastException)
+                    System.out.printf("Client %s (guid: %d) send a packet with wrong structure. (Attemp to crash server?)", c.getUsername(), c.getGuid());
+                else
+                    System.out.printf("Unhandler exception occur while processing packet data.\nException message: %s\n", ite.getCause());
+            }
+            catch (SocketException se)
+            {
+                System.out.printf("\nClient %s (guid: %d) connection was closed unexpectedly. (possible disconnected?)\n", c.getUsername(), c.getGuid());
+                
+                Logout();
+            }
+            catch (SocketTimeoutException ste)
+            {
+                // Client will send a Time Sync every 10 sec.
+                // Every 30 sec, the server will request the client to send a ping acknowledgement.
+                // If a client does not send any packet for 60 seconds, we consider that it is disconnected.
+                System.out.printf("\nClient %s (guid: %d) is not respond for 60 seconds. (possible disconnected?)\n", c.getUsername(), c.getGuid());
+                
+                Logout();
+            }
+            catch (Exception e){e.printStackTrace();}
         }
-        catch (InvocationTargetException ite)
-        {
-            Throwable t = ite.getCause();
-            
-            if (t instanceof ClassCastException)
-                System.out.printf("Client %s (guid: %d) send a packet with wrong structure. (Attemp to crash server?)", c.getUsername(), c.getGuid());
-            else
-                System.out.printf("Unhandler exception occur while processing packet data.\nException message: %s\n", ite.getCause());
-        }
-        catch (SocketException se)
-        {
-            System.out.printf("\nClient %s (guid: %d) connection was closed unexpectedly. (possible disconnected?)\n", c.getUsername(), c.getGuid());
-            
-            Logout();
-        }
-        catch (SocketTimeoutException ste)
-        {
-            // Client will send a Time Sync every 10 sec.
-            // Every 30 sec, the server will request the client to send a ping acknowledgement.
-            // If a client does not send any packet for 60 seconds, we consider that it is disconnected.
-            System.out.printf("\nClient %s (guid: %d) is not respond for 60 seconds. (possible disconnected?)\n", c.getUsername(), c.getGuid());
-            
-            Logout();
-        }
-        catch (Exception e){e.printStackTrace();}
         
-        System.out.printf("Session thread %d stopped successfully.\n", c.getGuid());
+        System.out.printf("Session thread of %s (guid: %d) stopped successfully.\n", c.getUsername(), c.getGuid());
     }
     
     void HandleGetContactListOpcode(/* Packet packet */) throws Exception
@@ -499,7 +501,7 @@ public class Session implements Runnable, Opcode
             c.getSocket().close();
             
             Main.db.execute("UPDATE account SET online = 0 WHERE guid = %d", c.getGuid());
-            System.out.printf("Stopping session thread %d.\n", c.getGuid());
+            System.out.printf("Stopping session thread of %s (guid: %d).\n", c.getUsername(), c.getGuid());
             
             ResultSet rs = Main.db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
             
