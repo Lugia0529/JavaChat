@@ -174,12 +174,10 @@ public class Main implements Opcode
                     }
                     
                     rs = null;
-                    break;
                 }
                 else
                 {
                     System.out.printf("\nInvalid Opcode Receive: 0x%02X\n", packet.getOpcode());
-                    break;
                 }
             }
             catch (Exception e)
