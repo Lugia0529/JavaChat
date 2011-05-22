@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS `account` (
   `guid` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Global Unique Identifier',
   `username` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
-  `title` varchar(200) DEFAULT NULL,
-  `psm` varchar(200) DEFAULT NULL,
+  `title` varchar(200) NOT NULL,
+  `psm` varchar(200) NOT NULL,
   `online` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`guid`),
   UNIQUE KEY `username` (`username`)
