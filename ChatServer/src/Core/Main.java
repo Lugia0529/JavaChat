@@ -20,9 +20,12 @@ package Core;
 import java.awt.Toolkit;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.ResultSet;
+
+import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
 
 public class Main implements Opcode
 {
@@ -32,48 +35,69 @@ public class Main implements Opcode
     public static Database db;
     public static long startupTime;
     
-    public static void main(String[] args) throws Exception
+    public static void main(String[] args)
     {
-        clientList = new ClientList();
-        
-        System.out.printf("Lugia Chat Server Beta\n\n");
-        
-        //Database Connection
-        db = new Database("jdbc:mysql://localhost/chat?user=root&password=password");
-        
-        System.out.println();
-        
-        new Thread(new CliHandler()).start();
-        
-        serverSocket = new ServerSocket(6769);
-        
-        startupTime = System.currentTimeMillis();
-        
-        //Update account database online status to 0 at startup
-        //some client may not record as logout in database if the server crash
-        System.out.printf("\nLogout all account\n");
-        db.execute("UPDATE account SET online = 0");
-        
-        System.out.printf("\nSocket connection start.\n");
-        
-        Toolkit.getDefaultToolkit().beep();
+        try
+        {
+            clientList = new ClientList();
+            
+            System.out.printf("Lugia Chat Server Beta\n\n");
+            
+            //Database Connection
+            db = new Database("jdbc:mysql://localhost/chat?user=root&password=password");
+            
+            System.out.println();
+            
+            new Thread(new CliHandler()).start();
+            
+            serverSocket = new ServerSocket(6769);
+            
+            startupTime = System.currentTimeMillis();
+            
+            //Update account database online status to 0 at startup
+            //some client may not record as logout in database if the server crash
+            System.out.printf("\nLogout all account\n");
+            db.execute("UPDATE account SET online = 0");
+            
+            System.out.printf("\nSocket connection start.\n");
+            
+            Toolkit.getDefaultToolkit().beep();
+        }
+        catch (MySQLSyntaxErrorException mysqle)
+        {
+            System.out.printf("Database Connection Fail. Please check for your database connection setting.\n");
+            System.exit(0);
+        }
+        catch (BindException be)
+        {
+            System.out.printf("Fail to open acceptor, please check for the port is free.\n");
+            System.exit(0);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            System.out.printf("Unknown error occur while starting the server.\n");
+            System.out.printf("Message: %s\n", e.getMessage());
+            System.exit(0);
+        }
         
         while(true)
         {
-            connectionSocket = serverSocket.accept();
-            
-            ObjectInputStream in = new ObjectInputStream(connectionSocket.getInputStream());
-            
-            Packet loginPacket = (Packet)in.readObject();
-            
-            switch(loginPacket.getOpcode())
+            try
             {
-                case CMSG_LOGIN:
+                connectionSocket = serverSocket.accept();
+                
+                ObjectInputStream in = new ObjectInputStream(connectionSocket.getInputStream());
+                
+                Packet packet = (Packet)in.readObject();
+                
+                if (packet.getOpcode() == CMSG_LOGIN)
+                {
                     System.out.printf("\nOpcode: CMSG_LOGIN\n");
                     
-                    String username = (String)loginPacket.get();
-                    String password = (String)loginPacket.get();
-                    int status = (Integer)loginPacket.get();
+                    String username = (String)packet.get();
+                    String password = (String)packet.get();
+                    int status = (Integer)packet.get();
                     
                     ResultSet rs = db.query("Select guid, username, title, psm, online from account where username='%s' and password='%s'", username, password);
                     
@@ -133,9 +157,16 @@ public class Main implements Opcode
                     
                     rs = null;
                     break;
-                default:
-                    System.out.printf("\nInvalid Opcode Receive: 0x%02X\n", loginPacket.getOpcode());
+                }
+                else
+                {
+                    System.out.printf("\nInvalid Opcode Receive: 0x%02X\n", packet.getOpcode());
                     break;
+                }
+            }
+            catch (Exception e)
+            {
+                System.out.printf("Exception % occur with message %s\n", e.getClass(), e.getMessage());
             }
         }
     }

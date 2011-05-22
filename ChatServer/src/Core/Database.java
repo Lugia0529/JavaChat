@@ -27,21 +27,15 @@ public class Database
     private Connection conn;
     private Statement s;
     
-    public Database(String connString)
+    public Database(String connString) throws Exception
     {
         System.out.printf("Initializing database connection.\n");
         System.out.printf("Connection String: %s\n", connString);
-        try
-        {
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
-            conn = DriverManager.getConnection(connString);
-            s = conn.createStatement();
-            System.out.printf("Database Connection Successful\n");
-        }
-        catch (Exception e)
-        {
-            System.out.printf("Database Connection Fail\n");
-        }
+        
+        Class.forName("com.mysql.jdbc.Driver").newInstance();
+        conn = DriverManager.getConnection(connString);
+        s = conn.createStatement();
+        System.out.printf("Database Connection Successful\n");
     }
     
     public int execute(String sql, Object... args)
