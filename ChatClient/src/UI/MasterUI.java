@@ -374,8 +374,6 @@ public class MasterUI extends JFrame implements Opcode
                 if (isLoginUI)
                     return;
                 
-                System.out.println("Changed");
-                
                 // Only logout have special handle, status change only inform server
                 if (cbStatus.getSelectedIndex() != 4)
                 {
