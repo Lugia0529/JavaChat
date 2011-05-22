@@ -43,7 +43,7 @@ public class NetworkManager implements Opcode
         out = null;
     }
     
-    public static void login(String username, String password)
+    public static void login(String username, String password,int status)
     {
         try
         {
@@ -58,6 +58,7 @@ public class NetworkManager implements Opcode
             Packet loginPacket = new Packet(CMSG_LOGIN);
             loginPacket.put(username);
             loginPacket.put(password);
+            loginPacket.put(status);
             
             SendPacket(loginPacket);
             

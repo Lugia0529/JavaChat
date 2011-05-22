@@ -76,12 +76,6 @@ public class NetworkThread implements Runnable, Opcode
             if (p.getOpcode() != SMSG_CONTACT_LIST_ENDED)
                 UICore.showMessageDialog("Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
             
-            // Tell the server the current status of client. Will be useful in login as this status when it is implemented.
-            Packet statusPacket = new Packet(CMSG_STATUS_CHANGED);
-            statusPacket.put(0);
-            
-            NetworkManager.SendPacket(statusPacket);
-            
             timer = new Timer();
             timer.scheduleAtFixedRate(new PeriodicTimeSyncResp(), 0, 10 * 1000);
             

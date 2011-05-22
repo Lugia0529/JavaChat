@@ -52,7 +52,6 @@ import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-
 public class MasterUI extends JFrame implements Opcode
 {
     private static JPanel loginPanel;
@@ -67,11 +66,14 @@ public class MasterUI extends JFrame implements Opcode
     
     private JTextField txtUsername;
     private JPasswordField txtPassword;
+    private JComboBox cbLoginAsStatus;
+    
     private JLabel lblUsername;
     private JLabel lblPassword;
+    private JLabel lblLoginAsStatus;
     
     /* Contact List Interface */
-    private JComboBox cStatus;
+    private JComboBox cbStatus;
     private JList contactList;
     private JScrollPane contactListPane;
     
@@ -86,7 +88,8 @@ public class MasterUI extends JFrame implements Opcode
     
     private DefaultListModel model;
     
-    private String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
+    private String[] loginAsStatus = {"Available", "Away", "Busy", "Appear Offline"};
+    private String[] status = {"Available", "Away", "Busy", "Appear Offline", "Logout"};
     
     private AccountDetail accountContact;
     
@@ -103,24 +106,30 @@ public class MasterUI extends JFrame implements Opcode
         /* Login UI */
         lblUsername = new JLabel("Username");
         lblPassword = new JLabel("Password");
+        lblLoginAsStatus = new JLabel("Status");
         txtUsername = new JTextField();
         txtPassword = new JPasswordField();
+        cbLoginAsStatus = new JComboBox(loginAsStatus);
         btnLogin = new JButton("Login");
         btnReg = new JButton("Register");
         btnExit = new JButton("Exit");
         
         loginPanel.add(lblPassword);
         loginPanel.add(lblUsername);
+        loginPanel.add(lblLoginAsStatus);
         loginPanel.add(txtPassword);
         loginPanel.add(txtUsername);
+        loginPanel.add(cbLoginAsStatus);
         loginPanel.add(btnLogin);
         loginPanel.add(btnReg);
         loginPanel.add(btnExit);
         
-        lblPassword.setBounds(25, 250, 100, 25);
-        lblUsername.setBounds(25, 180, 100, 25);
-        txtPassword.setBounds(25, 270, 220, 25);
-        txtUsername.setBounds(25, 200, 220, 25);
+        lblPassword.setBounds(25, 180, 100, 25);
+        lblUsername.setBounds(25, 130, 100, 25);
+        lblLoginAsStatus.setBounds(25, 230, 100, 25);
+        txtPassword.setBounds(25, 200, 220, 25);
+        txtUsername.setBounds(25, 150, 220, 25);
+        cbLoginAsStatus.setBounds(25, 250, 220, 25);
         btnLogin.setBounds(85,310, 100, 25);
         btnReg.setBounds(30, 420, 100, 25);
         btnExit.setBounds(140, 420, 100, 25);
@@ -132,7 +141,7 @@ public class MasterUI extends JFrame implements Opcode
         txtTitle = new JTextField();
         txtPSM = new JTextField();
         
-        cStatus = new JComboBox(status);
+        cbStatus = new JComboBox(status);
         
         btnAddContact = new JButton("Add Contact");
         btnRemoveContact = new JButton("Remove Contact");
@@ -145,7 +154,7 @@ public class MasterUI extends JFrame implements Opcode
         contactPanel.add(txtTitle);
         contactPanel.add(lblPSM);
         contactPanel.add(txtPSM);
-        contactPanel.add(cStatus);
+        contactPanel.add(cbStatus);
         contactPanel.add(btnAddContact);
         contactPanel.add(btnRemoveContact);
         contactPanel.add(contactListPane);
@@ -154,7 +163,7 @@ public class MasterUI extends JFrame implements Opcode
         txtTitle.setBounds(15, 10, 240, 25);
         lblPSM.setBounds(15, 35, 240, 25);
         txtPSM.setBounds(15, 35, 240, 25);
-        cStatus.setBounds(10, 65, 245, 25);
+        cbStatus.setBounds(10, 65, 245, 25);
         btnAddContact.setBounds(10, 100, 120, 25);
         btnRemoveContact.setBounds(135, 100, 120, 25);
         contactListPane.setBounds(10, 130, 245, 330);
@@ -178,7 +187,7 @@ public class MasterUI extends JFrame implements Opcode
         setVisible(true);
         
         btnLogin.addActionListener(actListener);
-        cStatus.addActionListener(actListener);
+        cbStatus.addActionListener(actListener);
         btnExit.addActionListener(actListener);
         btnAddContact.addActionListener(actListener);
         btnRemoveContact.addActionListener(actListener);
@@ -209,6 +218,8 @@ public class MasterUI extends JFrame implements Opcode
         lblPSM.setFont(new Font("sansserif", psm.equals("") ? Font.ITALIC : Font.PLAIN, 12));
         lblPSM.setForeground(psm.equals("") ? Color.GRAY : Color.BLACK);
         
+        cbStatus.setSelectedIndex(accountContact.getStatus());
+        
         updateUITitle();
     }
     
@@ -231,6 +242,7 @@ public class MasterUI extends JFrame implements Opcode
     {
         txtUsername.setEnabled(enable);
         txtPassword.setEnabled(enable);
+        cbLoginAsStatus.setEnabled(enable);
     }
     
     public void addContact(Contact c)
@@ -296,7 +308,7 @@ public class MasterUI extends JFrame implements Opcode
             return;
         }
         
-        NetworkManager.login(txtUsername.getText(), new String(txtPassword.getPassword()));
+        NetworkManager.login(txtUsername.getText(), new String(txtPassword.getPassword()), cbLoginAsStatus.getSelectedIndex());
     }
     
     public void resetUI()
@@ -310,7 +322,7 @@ public class MasterUI extends JFrame implements Opcode
             model.clear();
             lblTitle.setText("");
             lblPSM.setText("");
-            cStatus.setSelectedIndex(0);
+            cbStatus.setSelectedIndex(0);
         }
     }
     
@@ -356,13 +368,19 @@ public class MasterUI extends JFrame implements Opcode
                     JOptionPane.showMessageDialog(null, "No contact is selected!", "Remove Contact", JOptionPane.ERROR_MESSAGE);
             }
             
-            if (e.getSource().equals(cStatus))
+            if (e.getSource().equals(cbStatus))
             {
-                //Only logout have special handle, status change only inform server
-                if (cStatus.getSelectedIndex() != 4)
+                // You can only change status when you are logged in
+                if (isLoginUI)
+                    return;
+                
+                System.out.println("Changed");
+                
+                // Only logout have special handle, status change only inform server
+                if (cbStatus.getSelectedIndex() != 4)
                 {
                     Packet p = new Packet(CMSG_STATUS_CHANGED);
-                    p.put(cStatus.getSelectedIndex());
+                    p.put(cbStatus.getSelectedIndex());
                     
                     NetworkManager.SendPacket(p);
                 }

@@ -69,10 +69,11 @@ public class Main implements Opcode
             switch(loginPacket.getOpcode())
             {
                 case CMSG_LOGIN:
-                    System.out.printf("Opcode: CMSG_LOGIN\n");
+                    System.out.printf("\nOpcode: CMSG_LOGIN\n");
                     
                     String username = (String)loginPacket.get();
                     String password = (String)loginPacket.get();
+                    int status = (Integer)loginPacket.get();
                     
                     ResultSet rs = db.query("Select guid, username, title, psm, online from account where username='%s' and password='%s'", username, password);
                     
@@ -84,8 +85,10 @@ public class Main implements Opcode
                             
                             c.setTitle(rs.getString(3));
                             c.setPSM(rs.getString(4));
-                            c.setStatus(0);
+                            c.setStatus(status);
                             c.createSession(connectionSocket, in, new ObjectOutputStream(connectionSocket.getOutputStream()));
+                            
+                            System.out.printf("%s (guid: %d) logged in as status %d.\n", c.getUsername(), c.getGuid(), c.getStatus());
                             
                             db.execute("UPDATE account SET online = 1 WHERE guid = %d", c.getGuid());
                             
@@ -99,6 +102,16 @@ public class Main implements Opcode
                             p.put(c.getStatus());
                             
                             c.getSession().SendPacket(p);
+                            
+                            ResultSet crs = db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
+                            
+                            while(crs.next())
+                            {
+                                Client target = Main.clientList.findClient(crs.getInt(1));
+                            
+                                if (target != null)
+                                    target.getSession().SendStatusChanged(c.getGuid(), c.getStatus());
+                            }
                             
                             clientList.add(c);
                         }
