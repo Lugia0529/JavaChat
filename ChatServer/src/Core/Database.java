@@ -29,7 +29,7 @@ public class Database
     
     public Database(String connString) throws Exception
     {
-        System.out.printf("Initializing database connection.\n");
+        System.out.printf("\nInitializing database connection.\n");
         System.out.printf("Connection String: %s\n", connString);
         
         Class.forName("com.mysql.jdbc.Driver").newInstance();

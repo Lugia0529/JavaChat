@@ -26,7 +26,7 @@ public class CliHandler implements Runnable
     
     public CliHandler() throws Exception
     {
-        System.out.printf("Initializing Cli Command Handler.\n");
+        System.out.printf("\nInitializing Cli Command Handler.\n");
         in = new BufferedReader(new InputStreamReader(System.in));
     }
     

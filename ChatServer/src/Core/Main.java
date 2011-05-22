@@ -18,6 +18,7 @@
 package Core;
 
 import java.awt.Toolkit;
+import java.io.FileNotFoundException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.BindException;
@@ -43,25 +44,42 @@ public class Main implements Opcode
             
             System.out.printf("Lugia Chat Server Beta\n\n");
             
-            //Database Connection
-            db = new Database("jdbc:mysql://localhost/chat?user=root&password=password");
+            // Load Config
+            Config.loadConfig();
             
-            System.out.println();
+            String dbname = Config.getStringDefault("DatabaseName", "chat");
+            String dbuser = Config.getStringDefault("DatabaseUsername", "root");
+            String dbpass = Config.getStringDefault("DatabasePassword", "password");
             
+            // Database Connection
+            db = new Database(String.format("jdbc:mysql://localhost/%s?user=%s%s", dbname, dbuser, !dbpass.equals("") ? "&password=" + dbpass : ""));
+            
+            // Start CLI
             new Thread(new CliHandler()).start();
             
-            serverSocket = new ServerSocket(6769);
-            
-            startupTime = System.currentTimeMillis();
-            
-            //Update account database online status to 0 at startup
-            //some client may not record as logout in database if the server crash
+            // Update account database online status to 0 at startup
+            // Some client may not record as logout in database if the server crash
             System.out.printf("\nLogout all account\n");
             db.execute("UPDATE account SET online = 0");
             
-            System.out.printf("\nSocket connection start.\n");
+            // Open socket
+            int socketPort = Config.getIntDefault("ServerPort", 6769);
             
-            Toolkit.getDefaultToolkit().beep();
+            System.out.printf("\nServer Port: %d\n" , socketPort);
+            
+            serverSocket = new ServerSocket(socketPort);
+            
+            System.out.printf("Socket connection start.\n");
+            
+            startupTime = System.currentTimeMillis();
+            
+            if (Config.getBoolDefault("BeepAtStart", true))
+                Toolkit.getDefaultToolkit().beep();
+        }
+        catch (FileNotFoundException fnfe)
+        {
+            System.out.printf("Config file could not be loaded.\n");
+            System.exit(0);
         }
         catch (MySQLSyntaxErrorException mysqle)
         {
