@@ -145,15 +145,7 @@ public class Main implements Opcode
                             
                             c.getSession().SendPacket(p);
                             
-                            ResultSet crs = db.query("SELECT c_guid FROM contact WHERE o_guid = %d", c.getGuid());
-                            
-                            while(crs.next())
-                            {
-                                Client target = Main.clientList.findClient(crs.getInt(1));
-                            
-                                if (target != null)
-                                    target.getSession().SendStatusChanged(c.getGuid(), c.getStatus());
-                            }
+                            c.getSession().InformOthersForStatusChange();
                             
                             clientList.add(c);
                         }
