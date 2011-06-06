@@ -23,6 +23,8 @@ import UI.ContactRequestUI;
 import java.io.EOFException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.ListIterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -30,8 +32,10 @@ import javax.swing.JOptionPane;
 
 public class NetworkThread implements Runnable, Opcode
 {
+    private static ArrayList<Packet> PacketStorage;
     private static volatile Thread thread;
     private static Timer timer;
+    private static SessionStatus sessionStatus;
     private int counter;
     
     public static void stop()
@@ -46,95 +50,138 @@ public class NetworkThread implements Runnable, Opcode
     {
         thread = Thread.currentThread();
         
+        sessionStatus = SessionStatus.LOGGEDIN;
+        
+        PacketStorage = new ArrayList<Packet>();
+        
         // The server will first send SMSG_CONTACT_DETAIL signal to inform client that this is a client detail data.
         NetworkManager.getContactList();
         
-        try
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new PeriodicTimeSyncResp(), 0, 10 * 1000);
+        
+        Packet p;
+        
+        while(thread == Thread.currentThread())
         {
-            Packet p;
-            
-            while(true)
+            try
             {
                 p = NetworkManager.ReceivePacket();
                 
-                if (p.getOpcode() != SMSG_CONTACT_DETAIL)
-                    break;
+                if (p.getOpcode() < 0x00 || p.getOpcode() >= opcodeTable.length)
+                    continue;
                 
-                int guid = (Integer)p.get();
-                String c_username = (String)p.get();
-                String c_title = (String)p.get();
-                String c_psm = (String)p.get();
-                int c_status = (Integer)p.get();
+                OpcodeDetail opcode = opcodeTable[p.getOpcode()];
                 
-                Contact c = new Contact(guid, c_username, c_title, c_psm, c_status);
+                if (p.size() != opcode.length)
+                    continue;
                 
-                UICore.getMasterUI().addContact(c);
-            }
-            
-            // The server will send SMSG_CONTACT_LIST_ENDED signal to inform client that all client data is sent.
-            // If the client receive signal other than SMSG_CONTACT_LIST_ENDED, the client may miss some contact data while receiving.
-            if (p.getOpcode() != SMSG_CONTACT_LIST_ENDED)
-                UICore.showMessageDialog("Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
-            
-            timer = new Timer();
-            timer.scheduleAtFixedRate(new PeriodicTimeSyncResp(), 0, 10 * 1000);
-            
-            while(thread == Thread.currentThread())
-            {
-                p = NetworkManager.ReceivePacket();
-                
-                switch (p.getOpcode())
+                if (opcode.sessionStatus == sessionStatus.INSTANT)
                 {
-                    case SMSG_SEND_CHAT_MESSAGE:
-                        HandleChatMessageOpcode(p);
-                        break;
-                    case SMSG_STATUS_CHANGED:
-                        HandleStatusChangedOpcode(p);
-                        break;
-                    case SMSG_CONTACT_ALREADY_IN_LIST:
-                        UICore.showMessageDialog("The contact is already in list.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
-                        break;
-                    case SMSG_CONTACT_NOT_FOUND:
-                        UICore.showMessageDialog("No such user found.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
-                        break;
-                    case SMSG_ADD_CONTACT_SUCCESS:
-                        HandleAddContactSuccessOpcode(p);
-                        break;
-                    case SMSG_CONTACT_REQUEST:
-                        HandleContactRequestOpcode(p);
-                        break;
-                    case SMSG_PING:
+                    if (p.getOpcode() == SMSG_PING)
+                    {
                         NetworkManager.SendPacket(new Packet(CMSG_PING));
-                        break;
-                    case SMSG_TITLE_CHANGED:
-                    case SMSG_PSM_CHANGED:
-                        HandleContactDetailChangedOpcode(p);
-                        break;
-                    case SMSG_LOGOUT_COMPLETE:
-                        NetworkManager.logout();
-                        break;
+                        continue;
+                    }
                 }
+                
+                if (!IsOpcodeCanProcessNow(opcode))
+                {
+                    PacketStorage.add(p);
+                    continue;
+                }
+                
+                ProcessPacket(p);
             }
+            catch (EOFException eof)
+            {
+                NetworkManager.logout();
+
+                UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            }
+            catch (SocketException se)
+            {
+                NetworkManager.logout();
+
+                UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            }
+            catch (SocketTimeoutException ste)
+            {
+                NetworkManager.logout();
+
+                UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            }
+            catch (Exception e) {}
         }
-        catch (EOFException eof)
+    }
+    
+    boolean IsOpcodeCanProcessNow(OpcodeDetail detail)
+    {
+        if (sessionStatus == detail.sessionStatus || sessionStatus == SessionStatus.READY || detail.sessionStatus == SessionStatus.INSTANT)
+            return true;
+        
+        return false;
+    }
+    
+    void ProcessQueuePacket() throws Exception
+    {
+        for (ListIterator<Packet> packet = PacketStorage.listIterator(); packet.hasNext(); )
         {
-            NetworkManager.logout();
+            Packet p = packet.next();
             
-            UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            OpcodeDetail opcode = opcodeTable[p.getOpcode()];
+            
+            if (!IsOpcodeCanProcessNow(opcode))
+                continue;
+            
+            ProcessPacket(p);
+            packet.remove();
         }
-        catch (SocketException se)
+    }
+    
+    void ProcessPacket(Packet p) throws Exception
+    {
+        OpcodeDetail opcode = opcodeTable[p.getOpcode()];
+        
+        if (opcode.handler != null)
         {
-            NetworkManager.logout();
+            Class[] types;
+            Object[] args;
             
-            UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
+            types = opcode.reqPacketData ? new Class[] { Packet.class } : new Class[] {};
+            args = opcode.reqPacketData ? new Object[] { p } : new Object[] {};
+        
+            this.getClass().getDeclaredMethod(opcode.handler, types).invoke(this, args);
         }
-        catch (SocketTimeoutException ste)
-        {
-            NetworkManager.logout();
-            
-            UICore.showMessageDialog("You have been disconnected from the server.", "Disconnected", JOptionPane.INFORMATION_MESSAGE);
-        }
-        catch (Exception e) {}
+    }
+    
+    void HandleContactDetailOpcode(Packet packet)
+    {
+        int guid = (Integer)packet.get();
+        String c_username = (String)packet.get();
+        String c_title = (String)packet.get();
+        String c_psm = (String)packet.get();
+        int c_status = (Integer)packet.get();
+        
+        Contact c = new Contact(guid, c_username, c_title, c_psm, c_status);
+        
+        UICore.getMasterUI().addContact(c);
+    }
+    
+    void HandleContactListEndedOpcode(/* Packet packet */) throws Exception
+    {
+        sessionStatus = SessionStatus.READY;
+        ProcessQueuePacket();
+    }
+    
+    void HandleContactAlreadyInListOpcode(/* Packet packet */)
+    {
+        UICore.showMessageDialog("The contact is already in list.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    void HandleContactNotFoundOpcode(/* Packet packet */)
+    {
+        UICore.showMessageDialog("No such user found.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
     }
     
     void HandleChatMessageOpcode(Packet packet)
@@ -162,7 +209,7 @@ public class NetworkThread implements Runnable, Opcode
         targetUI.toFront();
     }
     
-    void HandleStatusChangedOpcode(Packet packet)
+    void HandleContactStatusChangedOpcode(Packet packet)
     {
         int guid = (Integer)packet.get();
         int status = (Integer)packet.get();
@@ -200,6 +247,11 @@ public class NetworkThread implements Runnable, Opcode
             UICore.getMasterUI().UpdateContactDetail(guid, data, null);
         else if (packet.getOpcode() == SMSG_PSM_CHANGED)
             UICore.getMasterUI().UpdateContactDetail(guid, null, data);
+    }
+    
+    void HandleLogoutCompleteOpcode(/* Packet packet */)
+    {
+        NetworkManager.logout();
     }
     
     class PeriodicTimeSyncResp extends TimerTask 
