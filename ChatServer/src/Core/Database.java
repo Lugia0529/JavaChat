@@ -25,7 +25,6 @@ import java.sql.Statement;
 public class Database
 {
     private Connection conn;
-    private Statement s;
     
     public Database(String connString) throws Exception
     {
@@ -34,7 +33,7 @@ public class Database
         
         Class.forName("com.mysql.jdbc.Driver").newInstance();
         conn = DriverManager.getConnection(connString);
-        s = conn.createStatement();
+        
         System.out.printf("Database Connection Successful\n");
     }
     
@@ -43,6 +42,7 @@ public class Database
         try
         {
             System.out.printf("SQL: " + sql + "\n", args);
+            Statement s = conn.createStatement();
             return s.executeUpdate(String.format(sql, args));
         }
         catch(Exception e)
@@ -56,6 +56,7 @@ public class Database
         try
         {
             System.out.printf("SQL: " + sql + "\n", args);
+            Statement s = conn.createStatement();
             return s.executeQuery(String.format(sql, args));
         }
         catch(Exception e)

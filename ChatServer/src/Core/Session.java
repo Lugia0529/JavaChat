@@ -110,7 +110,6 @@ public class Session implements Runnable, Opcode
                 {
                     System.out.printf("Processing is not require for this packet.\n");
                     continue;
-                    
                 }
             }
             catch (InvocationTargetException ite)
@@ -181,6 +180,8 @@ public class Session implements Runnable, Opcode
             Thread.sleep(10);
         }
         
+        rs.close();
+        
         System.out.print("Send Opcode: SMSG_CONTACT_LIST_ENDED\n");
         
         SendPacket(new Packet(SMSG_CONTACT_LIST_ENDED));
@@ -203,6 +204,8 @@ public class Session implements Runnable, Opcode
             
             Thread.sleep(10);
         }
+        
+        requestRS.close();
         
         // We start a latency check after 1 sec.
         timer = new Timer();
@@ -238,7 +241,9 @@ public class Session implements Runnable, Opcode
         {
             System.out.printf("Client %d add self to contact list.\n", c.getGuid());
             
-            if (!Main.db.query("SELECT id FROM contact WHERE o_guid = %d AND c_guid= %d", c.getGuid(), c.getGuid()).first())
+            ResultSet rs = Main.db.query("SELECT id FROM contact WHERE o_guid = %d AND c_guid= %d", c.getGuid(), c.getGuid());
+            
+            if (rs.first())
             {
                 Packet p = new Packet(SMSG_ADD_CONTACT_SUCCESS);
                 p.put(c.getGuid());
@@ -251,6 +256,8 @@ public class Session implements Runnable, Opcode
                 
                 Main.db.execute("INSERT INTO contact(o_guid, c_guid) VALUES(%d, %d)", c.getGuid(), c.getGuid());
             }
+            
+            rs.close();
             
             return;
         }
@@ -320,11 +327,15 @@ public class Session implements Runnable, Opcode
                 
                 SendPacket(p);
             }
+            
+            acrs.close();
         }
         else
         {
             SendPacket(new Packet(SMSG_CONTACT_NOT_FOUND));
         }
+        
+        ars.close();
     }
     
     void HandleContactAcceptOpcode(Packet packet) throws Exception
@@ -361,6 +372,8 @@ public class Session implements Runnable, Opcode
             
             requestor.getSession().SendPacket(statusPacket);
         }
+        
+        rrs.close();
     }
     
     void HandleContactDeclineOpcode(Packet packet) throws Exception
@@ -510,6 +523,8 @@ public class Session implements Runnable, Opcode
             if (target != null)
                 target.getSession().SendPacket(p);
         }
+        
+        rs.close();
     }
     
     void Logout()
