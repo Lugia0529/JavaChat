@@ -102,8 +102,6 @@ public class MasterUI extends JFrame implements Opcode
     private String[] loginAsStatus = {"Available", "Away", "Busy", "Appear Offline"};
     private String[] status = {"Available", "Away", "Busy", "Appear Offline", "Logout"};
     
-    private AccountDetail accountContact;
-    
     public MasterUI()
     {
         setTitle("Login");
@@ -238,32 +236,22 @@ public class MasterUI extends JFrame implements Opcode
     
     public void setAccountDetail(int guid, String username, String title, String psm, int status)
     {
-        this.accountContact = new AccountDetail(guid, username, title, psm, status);
+        AccountDetail.init(guid, username, title, psm, status);
         
-        lblTitle.setText(accountContact.getTitle());
+        lblTitle.setText(AccountDetail.getDisplayTitle());
         
         lblPSM.setText(psm.equals("") ? "<Click to type a personal message>" : psm);
         lblPSM.setFont(new Font("sansserif", psm.equals("") ? Font.ITALIC : Font.PLAIN, 12));
         lblPSM.setForeground(psm.equals("") ? Color.GRAY : Color.BLACK);
         
-        cbStatus.setSelectedIndex(accountContact.getStatus());
+        cbStatus.setSelectedIndex(AccountDetail.getStatus());
         
         updateUITitle();
     }
     
-    public AccountDetail getAccountDetail()
-    {
-        return this.accountContact;
-    }
-    
-    public void clearAccountDetail()
-    {
-        this.accountContact = null;
-    }
-    
     public void updateUITitle()
     {
-        setTitle(accountContact.getUITitle());
+        setTitle(AccountDetail.getUITitle());
     }
     
     public void enableLoginInput(boolean enable)
@@ -495,11 +483,11 @@ public class MasterUI extends JFrame implements Opcode
                 {
                     String newTitle = txtTitle.getText().trim();
                     
-                    if (!newTitle.equals(accountContact.getOriginalTitle()))
+                    if (!newTitle.equals(AccountDetail.getTitle()))
                     {
-                        accountContact.setTitle(newTitle);
+                        AccountDetail.setTitle(newTitle);
                         
-                        lblTitle.setText(accountContact.getTitle());
+                        lblTitle.setText(AccountDetail.getDisplayTitle());
                         
                         Packet p = new Packet(CMSG_TITLE_CHANGED);
                         p.put(newTitle);
@@ -515,9 +503,9 @@ public class MasterUI extends JFrame implements Opcode
                 {
                     String newPSM = txtPSM.getText().trim();
                     
-                    if (!newPSM.equals(accountContact.getPSM()))
+                    if (!newPSM.equals(AccountDetail.getPSM()))
                     {
-                        accountContact.setPSM(newPSM);
+                        AccountDetail.setPSM(newPSM);
                         
                         lblPSM.setText(newPSM.equals("") ? "<Click to type a personal message>" : newPSM);
                         lblPSM.setFont(new Font("sansserif", newPSM.equals("") ? Font.ITALIC : Font.PLAIN, 12));
@@ -547,7 +535,7 @@ public class MasterUI extends JFrame implements Opcode
                 lblTitle.setVisible(false);
                 txtTitle.setVisible(true);
                 
-                txtTitle.setText(accountContact.getOriginalTitle());
+                txtTitle.setText(AccountDetail.getTitle());
                 txtTitle.requestFocusInWindow();
             }
             
@@ -556,7 +544,7 @@ public class MasterUI extends JFrame implements Opcode
                 lblPSM.setVisible(false);
                 txtPSM.setVisible(true);
                 
-                txtPSM.setText(accountContact.getPSM());
+                txtPSM.setText(AccountDetail.getPSM());
                 txtPSM.requestFocusInWindow();
             }
             
@@ -578,7 +566,7 @@ public class MasterUI extends JFrame implements Opcode
                     ui.toFront();
                 }
                 else
-                    UICore.getChatUIList().add(new ChatUI(c, accountContact.getTitle()));
+                    UICore.getChatUIList().add(new ChatUI(c));
             }
         }
     };

@@ -204,7 +204,7 @@ public class NetworkThread implements Runnable, Opcode
         ChatUI targetUI = UICore.getChatUIList().findUI(s_contact);
         
         if (targetUI == null)
-            UICore.getChatUIList().add(targetUI = new ChatUI(s_contact, UICore.getMasterUI().getAccountDetail().getTitle()));
+            UICore.getChatUIList().add(targetUI = new ChatUI(s_contact));
         
         // Output the message in sender ChatUI.
         targetUI.append(s_contact.getTitle(), message);

@@ -17,79 +17,78 @@
 
 package Core;
 
-public class AccountDetail
+public final class AccountDetail
 {
-    private int guid;
-    private String username;
-    private String title;
-    private String psm;
-    private int status;
+    private static int guid;
+    private static String username;
+    private static String title;
+    private static String psm;
+    private static int status;
     
-    public AccountDetail(int guid, String username, String title, String psm, int status)
+    public static void init(int cGuid, String cUsername, String cTitle, String cPSM, int cStatus)
     {
-        this.guid = guid;
-        this.username = username;
-        this.title = title;
-        this.psm = psm;
-        this.status = status;
+        guid = cGuid;
+        username = cUsername;
+        title = cTitle;
+        psm = cPSM;
+        status = cStatus;
     }
     
-    public int getGuid()
+    public static void clear()
+    {
+        guid = 0;
+        username = null;
+        title = null;
+        psm = null;
+        status = 0;
+    }
+    
+    public static int getGuid()
     {
         return guid;
     }
     
-    public String getUsername()
+    public static String getUsername()
     {
         return username;
     }
     
-    public String getTitle()
-    {
-        return title.equals("") ? username : title;
-    }
-    
-    public String getOriginalTitle()
+    public static String getTitle()
     {
         return title;
     }
     
-    public String getPSM()
+    public static String getPSM()
     {
         return psm;
     }
     
-    public int getStatus()
+    public static int getStatus()
     {
         return status;
     }
     
-    public void setGuid(int guid)
+    public static void setTitle(String newTitle)
     {
-        this.guid = guid;
+        title = newTitle;
     }
     
-    public void setUsername(String username)
+    public static void setPSM(String newPSM)
     {
-        this.username = username;
+        psm = newPSM;
     }
     
-    public void setTitle(String title)
+    public static void setStatus(int newStatus)
     {
-        this.title = title;
+        status = newStatus;
     }
     
-    public void setPSM(String psm)
+    public static String getDisplayTitle()
     {
-        this.psm = psm;
+        return title.equals("") ? username : title;
     }
     
-    public void setStatus(int status)
-    {
-        this.status = status;
-    }
-    
-    public String getUITitle()
+    public static String getUITitle()
     {
         return String.format("JavaChat <%s>", getUsername());
     }

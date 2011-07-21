@@ -123,7 +123,7 @@ public class NetworkManager implements Opcode
         UICore.getRoomChatUIList().disposeAllUI();
         UICore.getMasterUI().setTitle("Login");
         UICore.getMasterUI().enableLoginInput(true);
-        UICore.getMasterUI().clearAccountDetail();
+        AccountDetail.clear();
     }
     
     public static void getContactList()

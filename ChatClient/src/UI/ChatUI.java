@@ -17,6 +17,7 @@
 
 package UI;
 
+import Core.AccountDetail;
 import Core.Contact;
 import Core.NetworkManager;
 import Core.Opcode;
@@ -37,18 +38,15 @@ public final class ChatUI extends JFrame implements Opcode
 {
     Contact c;
     
-    String accountTitle;
-    
     JScrollPane paneOutput;
     JScrollPane paneInput;
     
     JTextArea txtOutput;
     JTextArea txtInput;
     
-    public ChatUI(Contact c, String accountTitle)
+    public ChatUI(Contact c)
     {
         this.c = c;
-        this.accountTitle = accountTitle;
         
         UpdateTitle();
         
@@ -132,7 +130,7 @@ public final class ChatUI extends JFrame implements Opcode
                 message = message.replaceAll("\n", "\n     ");
                 
                 // Output the message to Chat Interface too.
-                append(accountTitle, message);
+                append(AccountDetail.getDisplayTitle(), message);
                 
                 // Reset the input text area.
                 txtInput.setText("");
