@@ -99,11 +99,8 @@ public class Session implements Runnable, Opcode
                 
                 if (opcode.handler != null)
                 {
-                    Class[] types;
-                    Object[] args;
-                    
-                    types = opcode.reqPacketData ? new Class[] { Packet.class } : new Class[] {};
-                    args = opcode.reqPacketData ? new Object[] { p } : new Object[] {};
+                    Class[] types = new Class[] { Packet.class };
+                    Object[] args = new Object[] { p };
                 
                     this.getClass().getDeclaredMethod(opcode.handler, types).invoke(this, args);
                 }
@@ -150,7 +147,7 @@ public class Session implements Runnable, Opcode
         System.out.printf("Session thread of %s (guid: %d) stopped successfully.\n", c.getUsername(), c.getGuid());
     }
     
-    void HandleGetContactListOpcode(/* Packet packet */) throws Exception
+    void HandleGetContactListOpcode(Packet packet) throws Exception
     {
         ResultSet rs = Main.db.query("SELECT a.guid, a.username, a.title, a.psm FROM contact AS c LEFT JOIN account AS a ON c.c_guid = a.guid WHERE c.o_guid = %d", c.getGuid());
         
@@ -213,7 +210,7 @@ public class Session implements Runnable, Opcode
         timer.schedule(new PeriodicLatencyCheck(), 1000);
     }
     
-    void HandleLogoutOpcode(/* Packet packet */) throws Exception
+    void HandleLogoutOpcode(Packet packet) throws Exception
     {
         SendPacket(new Packet(SMSG_LOGOUT_COMPLETE));
         
@@ -451,7 +448,7 @@ public class Session implements Runnable, Opcode
         c.setTicks(ticks);
     }
     
-    void HandlePingOpcode(/* Packet packet */)
+    void HandlePingOpcode(Packet packet)
     {
         int latency = (int)(System.currentTimeMillis() - pingTicks);
         

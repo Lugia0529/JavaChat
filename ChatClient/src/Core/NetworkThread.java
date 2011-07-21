@@ -147,11 +147,8 @@ public class NetworkThread implements Runnable, Opcode
         
         if (opcode.handler != null)
         {
-            Class[] types;
-            Object[] args;
-            
-            types = opcode.reqPacketData ? new Class[] { Packet.class } : new Class[] {};
-            args = opcode.reqPacketData ? new Object[] { p } : new Object[] {};
+            Class[] types = new Class[] { Packet.class };
+            Object[] args = new Object[] { p };
         
             this.getClass().getDeclaredMethod(opcode.handler, types).invoke(this, args);
         }
@@ -170,18 +167,18 @@ public class NetworkThread implements Runnable, Opcode
         UICore.getMasterUI().addContact(c);
     }
     
-    void HandleContactListEndedOpcode(/* Packet packet */) throws Exception
+    void HandleContactListEndedOpcode(Packet packet) throws Exception
     {
         sessionStatus = SessionStatus.READY;
         ProcessQueuePacket();
     }
     
-    void HandleContactAlreadyInListOpcode(/* Packet packet */)
+    void HandleContactAlreadyInListOpcode(Packet packet)
     {
         UICore.showMessageDialog("The contact is already in list.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
     }
     
-    void HandleContactNotFoundOpcode(/* Packet packet */)
+    void HandleContactNotFoundOpcode(Packet packet)
     {
         UICore.showMessageDialog("No such user found.", "Add Contact", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -251,7 +248,7 @@ public class NetworkThread implements Runnable, Opcode
             UICore.getMasterUI().UpdateContactDetail(guid, null, data);
     }
     
-    void HandleCreateRoomFailOpcode(/* Packet packet */)
+    void HandleCreateRoomFailOpcode(Packet packet)
     {
         UICore.showMessageDialog("Fail to create room, a room with same name is already exists.", "Create Room", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -350,7 +347,7 @@ public class NetworkThread implements Runnable, Opcode
         UICore.showMessageDialog(String.format("You are already a member of room %s!", roomName), "Join An Existing Room", JOptionPane.INFORMATION_MESSAGE);
     }
     
-    void HandleLogoutCompleteOpcode(/* Packet packet */)
+    void HandleLogoutCompleteOpcode(Packet packet)
     {
         NetworkManager.logout();
     }

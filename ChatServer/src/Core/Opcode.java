@@ -71,63 +71,61 @@ public interface Opcode
     
     final OpcodeDetail[] opcodeTable = 
     {
-        new OpcodeDetail /* 0x00 */ ("UNKNOWN",                      false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x01 */ ("CMSG_LOGIN",                   false, SessionStatus.NOTLOGGEDIN, 0, null                             ),
-        new OpcodeDetail /* 0x02 */ ("CMSG_LOGOUT",                  false, SessionStatus.LOGGEDIN,    0, "HandleLogoutOpcode"             ),
-        new OpcodeDetail /* 0x03 */ ("SMSG_LOGIN_SUCCESS",           false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x04 */ ("SMSG_LOGIN_FAILED",            false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x05 */ ("SMSG_MULTI_LOGIN",             false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x06 */ ("CMSG_GET_CONTACT_LIST",        false, SessionStatus.LOGGEDIN,    0, "HandleGetContactListOpcode"     ),
-        new OpcodeDetail /* 0x07 */ ("CMSG_ADD_CONTACT",             true,  SessionStatus.LOGGEDIN,    1, "HandleAddContactOpcode"         ),
-        new OpcodeDetail /* 0x08 */ ("CMSG_REMOVE_CONTACT",          true,  SessionStatus.LOGGEDIN,    1, "HandleRemoveContactOpcode"      ),
-        new OpcodeDetail /* 0x09 */ ("SMSG_ADD_CONTACT_SUCCESS",     false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x0A */ ("CMSG_STATUS_CHANGED",          true,  SessionStatus.LOGGEDIN,    1, "HandleStatusChangedOpcode"      ),
-        new OpcodeDetail /* 0x0B */ ("SMSG_CONTACT_DETAIL",          false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x0C */ ("SMSG_CONTACT_LIST_ENDED",      false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x0D */ ("CMSG_SEND_CHAT_MESSAGE",       true,  SessionStatus.LOGGEDIN,    2, "HandleChatMessageOpcode"        ),
-        new OpcodeDetail /* 0x0E */ ("SMSG_SEND_CHAT_MESSAGE",       false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x0F */ ("SMSG_STATUS_CHANGED",          false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x10 */ ("SMSG_CONTACT_ALREADY_IN_LIST", false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x11 */ ("SMSG_CONTACT_NOT_FOUND",       false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x12 */ ("SMSG_CONTACT_REQUEST",         false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x13 */ ("CMSG_CONTACT_ACCEPT",          true,  SessionStatus.LOGGEDIN,    1, "HandleContactAcceptOpcode"      ),
-        new OpcodeDetail /* 0x14 */ ("CMSG_CONTACT_DECLINE",         true,  SessionStatus.LOGGEDIN,    1, "HandleContactDeclineOpcode"     ),
-        new OpcodeDetail /* 0x15 */ ("CMSG_TIME_SYNC_RESP",          true,  SessionStatus.LOGGEDIN,    2, "HandleTimeSyncRespOpcode"       ),
-        new OpcodeDetail /* 0x16 */ ("CMSG_PING",                    false, SessionStatus.LOGGEDIN,    0, "HandlePingOpcode"               ),
-        new OpcodeDetail /* 0x17 */ ("SMSG_PING",                    false, SessionStatus.LOGGEDIN,    0, null                             ),
-        new OpcodeDetail /* 0x18 */ ("SMSG_LOGOUT_COMPLETE",         false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x19 */ ("CMSG_TITLE_CHANGED",           true,  SessionStatus.LOGGEDIN,    1, "HandleClientDetailChangedOpcode"),
-        new OpcodeDetail /* 0x1A */ ("SMSG_TITLE_CHANGED",           false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x1B */ ("CMSG_PSM_CHANGED",             true,  SessionStatus.LOGGEDIN,    1, "HandleClientDetailChangedOpcode"),
-        new OpcodeDetail /* 0x1C */ ("SMSG_PSM_CHANGED",             false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x1D */ ("CMSG_CREATE_ROOM",             true,  SessionStatus.LOGGEDIN,    2, "HandleCreateRoomOpcode"         ),
-        new OpcodeDetail /* 0x1E */ ("SMSG_CREATE_ROOM_FAILED",      false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x1F */ ("CMSG_JOIN_ROOM",               true,  SessionStatus.LOGGEDIN,    2, "HandleJoinRoomOpcode"           ),
-        new OpcodeDetail /* 0x20 */ ("CMSG_LEAVE_ROOM",              true,  SessionStatus.LOGGEDIN,    1, "HandleLeaveRoomOpcode"          ),
-        new OpcodeDetail /* 0x21 */ ("SMSG_JOIN_ROOM",               false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x22 */ ("SMSG_LEAVE_ROOM",              false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x23 */ ("SMSG_JOIN_ROOM_SUCCESS",       false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x24 */ ("SMSG_LEAVE_ROOM_SUCCESS",      false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x25 */ ("CMSG_ROOM_CHAT",               true,  SessionStatus.LOGGEDIN,    2, "HandleRoomChatOpcode"           ),
-        new OpcodeDetail /* 0x26 */ ("SMSG_ROOM_CHAT",               false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x27 */ ("SMSG_ROOM_NOT_FOUND",          false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x28 */ ("SMSG_WRONG_ROOM_PASSWORD",     false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x29 */ ("SMSG_ROOM_MEMBER_DETAIL",      false, SessionStatus.NEVER,       0, null                             ),
-        new OpcodeDetail /* 0x2A */ ("SMSG_ALREADY_IN_ROOM",         false, SessionStatus.NEVER,       0, null                             )
+        new OpcodeDetail /* 0x00 */ ("UNKNOWN",                      SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x01 */ ("CMSG_LOGIN",                   SessionStatus.NOTLOGGEDIN, 0, null                             ),
+        new OpcodeDetail /* 0x02 */ ("CMSG_LOGOUT",                  SessionStatus.LOGGEDIN,    0, "HandleLogoutOpcode"             ),
+        new OpcodeDetail /* 0x03 */ ("SMSG_LOGIN_SUCCESS",           SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x04 */ ("SMSG_LOGIN_FAILED",            SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x05 */ ("SMSG_MULTI_LOGIN",             SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x06 */ ("CMSG_GET_CONTACT_LIST",        SessionStatus.LOGGEDIN,    0, "HandleGetContactListOpcode"     ),
+        new OpcodeDetail /* 0x07 */ ("CMSG_ADD_CONTACT",             SessionStatus.LOGGEDIN,    1, "HandleAddContactOpcode"         ),
+        new OpcodeDetail /* 0x08 */ ("CMSG_REMOVE_CONTACT",          SessionStatus.LOGGEDIN,    1, "HandleRemoveContactOpcode"      ),
+        new OpcodeDetail /* 0x09 */ ("SMSG_ADD_CONTACT_SUCCESS",     SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x0A */ ("CMSG_STATUS_CHANGED",          SessionStatus.LOGGEDIN,    1, "HandleStatusChangedOpcode"      ),
+        new OpcodeDetail /* 0x0B */ ("SMSG_CONTACT_DETAIL",          SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x0C */ ("SMSG_CONTACT_LIST_ENDED",      SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x0D */ ("CMSG_SEND_CHAT_MESSAGE",       SessionStatus.LOGGEDIN,    2, "HandleChatMessageOpcode"        ),
+        new OpcodeDetail /* 0x0E */ ("SMSG_SEND_CHAT_MESSAGE",       SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x0F */ ("SMSG_STATUS_CHANGED",          SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x10 */ ("SMSG_CONTACT_ALREADY_IN_LIST", SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x11 */ ("SMSG_CONTACT_NOT_FOUND",       SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x12 */ ("SMSG_CONTACT_REQUEST",         SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x13 */ ("CMSG_CONTACT_ACCEPT",          SessionStatus.LOGGEDIN,    1, "HandleContactAcceptOpcode"      ),
+        new OpcodeDetail /* 0x14 */ ("CMSG_CONTACT_DECLINE",         SessionStatus.LOGGEDIN,    1, "HandleContactDeclineOpcode"     ),
+        new OpcodeDetail /* 0x15 */ ("CMSG_TIME_SYNC_RESP",          SessionStatus.LOGGEDIN,    2, "HandleTimeSyncRespOpcode"       ),
+        new OpcodeDetail /* 0x16 */ ("CMSG_PING",                    SessionStatus.LOGGEDIN,    0, "HandlePingOpcode"               ),
+        new OpcodeDetail /* 0x17 */ ("SMSG_PING",                    SessionStatus.LOGGEDIN,    0, null                             ),
+        new OpcodeDetail /* 0x18 */ ("SMSG_LOGOUT_COMPLETE",         SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x19 */ ("CMSG_TITLE_CHANGED",           SessionStatus.LOGGEDIN,    1, "HandleClientDetailChangedOpcode"),
+        new OpcodeDetail /* 0x1A */ ("SMSG_TITLE_CHANGED",           SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x1B */ ("CMSG_PSM_CHANGED",             SessionStatus.LOGGEDIN,    1, "HandleClientDetailChangedOpcode"),
+        new OpcodeDetail /* 0x1C */ ("SMSG_PSM_CHANGED",             SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x1D */ ("CMSG_CREATE_ROOM",             SessionStatus.LOGGEDIN,    2, "HandleCreateRoomOpcode"         ),
+        new OpcodeDetail /* 0x1E */ ("SMSG_CREATE_ROOM_FAILED",      SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x1F */ ("CMSG_JOIN_ROOM",               SessionStatus.LOGGEDIN,    2, "HandleJoinRoomOpcode"           ),
+        new OpcodeDetail /* 0x20 */ ("CMSG_LEAVE_ROOM",              SessionStatus.LOGGEDIN,    1, "HandleLeaveRoomOpcode"          ),
+        new OpcodeDetail /* 0x21 */ ("SMSG_JOIN_ROOM",               SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x22 */ ("SMSG_LEAVE_ROOM",              SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x23 */ ("SMSG_JOIN_ROOM_SUCCESS",       SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x24 */ ("SMSG_LEAVE_ROOM_SUCCESS",      SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x25 */ ("CMSG_ROOM_CHAT",               SessionStatus.LOGGEDIN,    2, "HandleRoomChatOpcode"           ),
+        new OpcodeDetail /* 0x26 */ ("SMSG_ROOM_CHAT",               SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x27 */ ("SMSG_ROOM_NOT_FOUND",          SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x28 */ ("SMSG_WRONG_ROOM_PASSWORD",     SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x29 */ ("SMSG_ROOM_MEMBER_DETAIL",      SessionStatus.NEVER,       0, null                             ),
+        new OpcodeDetail /* 0x2A */ ("SMSG_ALREADY_IN_ROOM",         SessionStatus.NEVER,       0, null                             )
     };
     
     final class OpcodeDetail
     {
         final String name;
-        final boolean reqPacketData;
         final SessionStatus sessionStatus;
         final int length;
         final String handler;
         
-        public OpcodeDetail(String name, boolean reqPacketData, SessionStatus status, int length, String Handler)
+        public OpcodeDetail(String name, SessionStatus status, int length, String Handler)
         {
             this.name = name;
-            this.reqPacketData = reqPacketData;
             this.sessionStatus = status;
             this.length = length;
             this.handler = Handler;
