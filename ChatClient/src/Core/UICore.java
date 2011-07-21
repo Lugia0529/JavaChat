@@ -26,7 +26,8 @@ import javax.swing.JOptionPane;
 public class UICore
 {
     private static MasterUI ui;
-    public static ChatUIList chatList;
+    private static ChatUIList chatList;
+    private static RoomChatUIList roomChatUIList;
     
     public UICore()
     {
@@ -36,6 +37,7 @@ public class UICore
     {
         ui = new MasterUI();
         chatList = new ChatUIList();
+        roomChatUIList = new RoomChatUIList();
     }
     
     public static MasterUI getMasterUI()
@@ -46,6 +48,11 @@ public class UICore
     public static ChatUIList getChatUIList()
     {
         return chatList;
+    }
+    
+    public static RoomChatUIList getRoomChatUIList()
+    {
+        return roomChatUIList;
     }
     
     public static void UpdateContactStatus(int guid, int status)
@@ -61,7 +68,6 @@ public class UICore
             if (chatUI != null)
                 chatUI.UpdateTitle();
         }
-        
     }
     
     public static void switchUI()

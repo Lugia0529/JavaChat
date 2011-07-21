@@ -20,23 +20,23 @@ package Core;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-public class ClientList
+public class RoomList
 {
-    private ArrayList<Client> list;
+    private ArrayList<Room> list;
     
-    public ClientList()
+    public RoomList()
     {
-        list = new ArrayList<Client>();
+        list = new ArrayList<Room>();
     }
     
-    public boolean add(Client c)
+    public boolean add(Room r)
     {
-        return list.add(c);
+        return list.add(r);
     }
     
-    public boolean remove(Client c)
+    public boolean remove(Room r)
     {
-        return list.remove(c);
+        return list.remove(r);
     }
     
     public int size()
@@ -44,25 +44,33 @@ public class ClientList
         return list.size();
     }
     
-    public Client findClient(int guid)
+    public int getNextRoomID()
     {
-        for (ListIterator<Client> c = list.listIterator(); c.hasNext(); )
-            if (c.next().getGuid() == guid)
-                return c.previous();
+        if (size() == 0)
+            return 0;
+        
+        return list.get(size() - 1).getRoomID() + 1;
+    }
+    
+    public Room findRoom(int roomID)
+    {
+        for (ListIterator<Room> r = list.listIterator(); r.hasNext(); )
+            if (r.next().getRoomID() == roomID)
+                return r.previous();
         
         return null;
     }
     
-    public Client findClient(String username)
+    public Room findRoom(String roomName)
     {
-        for (ListIterator<Client> c = list.listIterator(); c.hasNext(); )
-            if (c.next().getUsername().equalsIgnoreCase(username))
-                return c.previous();
+        for (ListIterator<Room> r = list.listIterator(); r.hasNext(); )
+            if (r.next().getRoomName().equalsIgnoreCase(roomName))
+                return r.previous();
         
         return null;
     }
     
-    public ListIterator<Client> listIterator()
+    public ListIterator<Room> listIterator()
     {
         return list.listIterator();
     }

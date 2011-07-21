@@ -19,6 +19,8 @@ package Core;
 
 import UI.ChatUI;
 import UI.ContactRequestUI;
+import UI.RoomChatUI;
+import UI.RoomFormUI;
 
 import java.io.EOFException;
 import java.net.SocketException;
@@ -247,6 +249,105 @@ public class NetworkThread implements Runnable, Opcode
             UICore.getMasterUI().UpdateContactDetail(guid, data, null);
         else if (packet.getOpcode() == SMSG_PSM_CHANGED)
             UICore.getMasterUI().UpdateContactDetail(guid, null, data);
+    }
+    
+    void HandleCreateRoomFailOpcode(/* Packet packet */)
+    {
+        UICore.showMessageDialog("Fail to create room, a room with same name is already exists.", "Create Room", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    void HandleJoinRoomOpcode(Packet packet)
+    {
+        int roomID = (Integer)packet.get();
+        String userName = (String)packet.get();
+        
+        RoomChatUI ui = UICore.getRoomChatUIList().findUI(roomID);
+        
+        if (ui != null)
+            ui.addMember(userName, true);
+    }
+    
+    void HandleLeaveRoomOpcode(Packet packet)
+    {
+        int roomID = (Integer)packet.get();
+        String userName = (String)packet.get();
+        
+        RoomChatUI ui = UICore.getRoomChatUIList().findUI(roomID);
+        
+        if (ui != null)
+            ui.removeMember(userName, true);
+    }
+    
+    void HandleJoinRoomSuccessOpcode(Packet packet)
+    {
+        int roomID = (Integer)packet.get();
+        String roomName = (String)packet.get();
+        
+        Room r = new Room(roomID, roomName);
+        RoomChatUI ui = new RoomChatUI(r, "abc");
+        
+        UICore.getRoomChatUIList().add(ui);
+    }
+    
+    void HandleLeaveRoomSuccessOpcode(Packet packet)
+    {
+        int roomID = (Integer)packet.get();
+        
+        RoomChatUI ui = UICore.getRoomChatUIList().findUI(roomID);
+        
+        if (ui != null)
+        {
+            ui.dispose();
+            UICore.getRoomChatUIList().remove(ui);
+        }
+    }
+    
+    void HandleRoomChatOpcode(Packet packet)
+    {
+        int roomID = (Integer)packet.get();
+        String sender = (String)packet.get();
+        String message = (String)packet.get();
+        
+        RoomChatUI ui = UICore.getRoomChatUIList().findUI(roomID);
+        
+        if (ui != null)
+            ui.append(sender, message);
+    }
+    
+    void HandleRoomNotFoundOpcode(Packet packet)
+    {
+        String roomName = (String)packet.get();
+        
+        UICore.showMessageDialog(String.format("Could not found a room with name %s!", roomName), "Join An Existing Room", JOptionPane.INFORMATION_MESSAGE);
+        
+        new RoomFormUI(RoomFormUI.JOIN_ROOM, roomName);
+    }
+    
+    void HandleWrongRoomPasswordOpcode(Packet packet)
+    {
+        String roomName = (String)packet.get();
+        
+        UICore.showMessageDialog(String.format("Wrong password for room %s!", roomName), "Join An Existing Room", JOptionPane.INFORMATION_MESSAGE);
+        
+        new RoomFormUI(RoomFormUI.JOIN_ROOM, roomName);
+    }
+    
+    void HandleRoomMemberDetailOpcode(Packet packet)
+    {
+        int roomID = (Integer)packet.get();
+        String userName = (String)packet.get();
+        
+        RoomChatUI ui = UICore.getRoomChatUIList().findUI(roomID);
+        
+        if (ui != null)
+            ui.addMember(userName, false);
+    }
+    
+    void HandleAlreadyInRoomOpcode(Packet packet)
+    {
+        String roomName = (String)packet.get();
+        
+        UICore.showMessageDialog(String.format("You are already a member of room %s!", roomName), "Join An Existing Room", JOptionPane.INFORMATION_MESSAGE);
     }
     
     void HandleLogoutCompleteOpcode(/* Packet packet */)

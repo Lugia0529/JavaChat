@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.sql.ResultSet;
+import java.util.ListIterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -508,6 +509,185 @@ public class Session implements Runnable, Opcode
         }
     }
     
+    void HandleCreateRoomOpcode(Packet packet) throws Exception
+    {
+        String roomName = (String)packet.get();
+        String roomPassword = (String)packet.get();
+        
+        System.out.printf("From Client: %s (guid: %d)\n", c.getUsername(), c.getGuid());
+        System.out.printf("Room name: %s, password: %s\n", roomName, roomPassword.equals("") ? "*NONE*" : roomPassword);
+        
+        if (Main.roomList.findRoom(roomName) != null)
+        {
+            System.out.printf("Failed to create room %s, a room with same name is already create.\n", roomName);
+            SendPacket(new Packet(SMSG_CREATE_ROOM_FAILED));
+            return;
+        }
+        
+        System.out.printf("Creating room %s.\n", roomName);
+        Room r = new Room(roomName, roomPassword);
+        
+        System.out.printf("Register client %d into room %d.\n", c.getGuid(), r.getRoomID());
+        r.addClient(c);
+        
+        Main.roomList.add(r);
+        
+        Packet p = new Packet(SMSG_JOIN_ROOM_SUCCESS);
+        p.put(r.getRoomID());
+        p.put(r.getRoomName());
+        
+        SendPacket(p);
+        
+        System.out.printf("Room %d created successfully.\n", r.getRoomID());
+    }
+    
+    void HandleJoinRoomOpcode(Packet packet) throws Exception
+    {
+        String roomName = (String)packet.get();
+        String roomPassword = (String)packet.get();
+        
+        System.out.printf("From Client: %s (guid: %d)\n", c.getUsername(), c.getGuid());
+        System.out.printf("Room name: %s, password: %s\n", roomName, roomPassword.equals("") ? "*NONE*" : roomPassword);
+        
+        Room room = Main.roomList.findRoom(roomName);
+        
+        if (room == null)
+        {
+            System.out.printf("Room with name %s is not found!\n", roomName);
+            
+            Packet p = new Packet(SMSG_ROOM_NOT_FOUND);
+            p.put(roomName);
+            
+            SendPacket(p);
+            
+            return;
+        }
+        
+        if (!room.getRoomPassword().equals(roomPassword))
+        {
+            System.out.printf("Client %d supplied a wrong password for room %d.\n", c.getGuid(), room.getRoomID());
+            
+            Packet p = new Packet(SMSG_WRONG_ROOM_PASSWORD);
+            p.put(roomName);
+            
+            SendPacket(p);
+            
+            return;
+        }
+        
+        if (room.findClient(c.getGuid()) != null)
+        {
+            System.out.printf("Client %d is already in room %s.\n", c.getGuid(), roomName);
+            
+            Packet p = new Packet(SMSG_ALREADY_IN_ROOM);
+            p.put(roomName);
+            
+            SendPacket(p);
+            
+            return;
+        }
+        
+        Packet joinPacket = new Packet(SMSG_JOIN_ROOM_SUCCESS);
+        joinPacket.put(room.getRoomID());
+        joinPacket.put(room.getRoomName());
+        
+        SendPacket(joinPacket);
+        
+        Packet p = new Packet(SMSG_JOIN_ROOM);
+        p.put(room.getRoomID());
+        p.put(c.getUsername());
+        
+        for (ListIterator<Client> client = room.clientListIterator(); client.hasNext(); )
+        {
+            Client member = client.next();
+            
+            Packet memberPacket = new Packet(SMSG_ROOM_MEMBER_DETAIL);
+            memberPacket.put(room.getRoomID());
+            memberPacket.put(member.getUsername());
+            
+            member.getSession().SendPacket(p);
+            SendPacket(memberPacket);
+        }
+        
+        System.out.printf("Register client %d into room %d.\n", c.getGuid(), room.getRoomID());
+        room.addClient(c);
+        
+        System.out.printf("Client %d join room %d successfully.\n", c.getGuid(), room.getRoomID());
+    }
+    
+    void HandleLeaveRoomOpcode(Packet packet) throws Exception
+    {
+        int roomID = (Integer)packet.get();
+        
+        System.out.printf("From Client: %s (guid: %d)\n", c.getUsername(), c.getGuid());
+        System.out.printf("Room ID: %d.\n", roomID);
+        
+        Room room = Main.roomList.findRoom(roomID);
+        
+        if (room == null)
+        {
+            System.out.printf("Room with ID %d is not found!\n", roomID);
+            return;
+        }
+        
+        if (room.findClient(c.getGuid()) == null)
+        {
+            // no in room?? Wrong packet??
+            System.out.printf("Room %d does not contain client %d. (cheater?)\n", roomID, c.getGuid());
+            return;
+        }
+        
+        System.out.printf("Remove client %d from room %d.\n", c.getGuid(), room.getRoomID());
+        room.removeClient(c);
+        
+        Packet p = new Packet(SMSG_LEAVE_ROOM);
+        p.put(room.getRoomID());
+        p.put(c.getUsername());
+        
+        for (ListIterator<Client> client = room.clientListIterator(); client.hasNext(); )
+            client.next().getSession().SendPacket(p);
+        
+        Packet leavePacket = new Packet(SMSG_LEAVE_ROOM_SUCCESS);
+        leavePacket.put(room.getRoomID());
+        
+        SendPacket(leavePacket);
+        
+        // Delete room if the room does not contain any client.
+        if (room.getRoomSize() == 0)
+        {
+            System.out.printf("Room %d is empty, remove.\n", room.getRoomID());
+            Main.roomList.remove(room);
+        }
+    }
+    
+    void HandleRoomChatOpcode(Packet packet) throws Exception
+    {
+        int roomID = (Integer)packet.get();
+        String message = (String)packet.get();
+        
+        Room room = Main.roomList.findRoom(roomID);
+        
+        if (room == null)
+            return;
+        
+        if (room.findClient(c.getGuid()) == null)
+        {
+            // no in room?? Wrong packet??
+            System.out.printf("Room %d does not contain client %d. (cheater?)\n", roomID, c.getGuid());
+            return;
+        }
+        
+        System.out.printf("Room Chat Message Receive From: %d, Room ID: %d, Message: %s\n", c.getGuid(), roomID, message);
+        
+        Packet p = new Packet(SMSG_ROOM_CHAT);
+        p.put(room.getRoomID());
+        p.put(c.getUsername());
+        p.put(message);
+        
+        for (ListIterator<Client> client = room.clientListIterator(); client.hasNext(); )
+            client.next().getSession().SendPacket(p);
+    }
+    
     void InformOthersForStatusChange() throws Exception
     {
         Packet p = new Packet(SMSG_STATUS_CHANGED);
@@ -527,6 +707,34 @@ public class Session implements Runnable, Opcode
         rs.close();
     }
     
+    void LeaveAllRoom() throws Exception
+    {
+        /*  TODO: Optimize Required */
+        
+        for (ListIterator<Room> room = Main.roomList.listIterator(); room.hasNext(); )
+        {
+            Room r = room.next();
+            
+            if (r.findClient(c.getGuid()) != null)
+            {
+                r.removeClient(c);
+                
+                if (r.getRoomSize() == 0)
+                {
+                    System.out.printf("Room %d is empty, remove.\n", r.getRoomID());
+                    Main.roomList.remove(r);
+                }
+                
+                Packet p = new Packet(SMSG_LEAVE_ROOM);
+                p.put(r.getRoomID());
+                p.put(c.getUsername());
+                
+                for (ListIterator<Client> client = r.clientListIterator(); client.hasNext(); )
+                    client.next().getSession().SendPacket(p);
+            }
+        }
+    }
+    
     void Logout()
     {
         try
@@ -542,6 +750,7 @@ public class Session implements Runnable, Opcode
             c.setStatus(3);
             
             InformOthersForStatusChange();
+            LeaveAllRoom();
             
             stop();
         }

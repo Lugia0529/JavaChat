@@ -17,53 +17,50 @@
 
 package Core;
 
+import UI.RoomChatUI;
+
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-public class ClientList
+public class RoomChatUIList
 {
-    private ArrayList<Client> list;
+    private ArrayList<RoomChatUI> list;
     
-    public ClientList()
+    public RoomChatUIList()
     {
-        list = new ArrayList<Client>();
+        list = new ArrayList<RoomChatUI>();
     }
     
-    public boolean add(Client c)
+    public boolean add(RoomChatUI ui)
     {
-        return list.add(c);
+        return list.add(ui);
     }
     
-    public boolean remove(Client c)
+    public boolean remove(RoomChatUI ui)
     {
-        return list.remove(c);
+        ui.dispose();
+        return list.remove(ui);
+    }
+    
+    public void disposeAllUI()
+    {
+        for (ListIterator<RoomChatUI> ui = list.listIterator(); ui.hasNext(); )
+            ui.next().dispose();
+        
+        list = new ArrayList<RoomChatUI>();
+    }
+    
+    public RoomChatUI findUI(int roomID)
+    {
+        for (ListIterator<RoomChatUI> ui = list.listIterator(); ui.hasNext(); )
+            if (ui.next().getRoom().getRoomID() == roomID)
+                return ui.previous();
+        
+        return null;
     }
     
     public int size()
     {
         return list.size();
-    }
-    
-    public Client findClient(int guid)
-    {
-        for (ListIterator<Client> c = list.listIterator(); c.hasNext(); )
-            if (c.next().getGuid() == guid)
-                return c.previous();
-        
-        return null;
-    }
-    
-    public Client findClient(String username)
-    {
-        for (ListIterator<Client> c = list.listIterator(); c.hasNext(); )
-            if (c.next().getUsername().equalsIgnoreCase(username))
-                return c.previous();
-        
-        return null;
-    }
-    
-    public ListIterator<Client> listIterator()
-    {
-        return list.listIterator();
     }
 }

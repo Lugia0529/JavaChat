@@ -47,6 +47,20 @@ public interface Opcode
     final byte SMSG_TITLE_CHANGED           = 0x1A;
     final byte CMSG_PSM_CHANGED             = 0x1B;
     final byte SMSG_PSM_CHANGED             = 0x1C;
+    final byte CMSG_CREATE_ROOM             = 0x1D;
+    final byte SMSG_CREATE_ROOM_FAILED      = 0x1E;
+    final byte CMSG_JOIN_ROOM               = 0x1F;
+    final byte CMSG_LEAVE_ROOM              = 0x20;
+    final byte SMSG_JOIN_ROOM               = 0x21;
+    final byte SMSG_LEAVE_ROOM              = 0x22;
+    final byte SMSG_JOIN_ROOM_SUCCESS       = 0x23;
+    final byte SMSG_LEAVE_ROOM_SUCCESS      = 0x24;
+    final byte CMSG_ROOM_CHAT               = 0x25;
+    final byte SMSG_ROOM_CHAT               = 0x26;
+    final byte SMSG_ROOM_NOT_FOUND          = 0x27;
+    final byte SMSG_WRONG_ROOM_PASSWORD     = 0x28;
+    final byte SMSG_ROOM_MEMBER_DETAIL      = 0x29;
+    final byte SMSG_ALREADY_IN_ROOM         = 0x2A;
     
     enum SessionStatus
     {
@@ -86,8 +100,22 @@ public interface Opcode
         new OpcodeDetail /* 0x18 */ ("SMSG_LOGOUT_COMPLETE",         false, SessionStatus.LOGGEDIN,    0, "HandleLogoutCompleteOpcode"      ),
         new OpcodeDetail /* 0x19 */ ("CMSG_TITLE_CHANGED",           false, SessionStatus.NEVER,       0, null                              ),
         new OpcodeDetail /* 0x1A */ ("SMSG_TITLE_CHANGED",           true,  SessionStatus.READY,       2, "HandleContactDetailChangedOpcode"),
-        new OpcodeDetail /* 0x1B */ ("CMSG_PSM_CHANGED",             false, SessionStatus.READY,       0, null                              ),
-        new OpcodeDetail /* 0x1C */ ("SMSG_PSM_CHANGED",             true,  SessionStatus.NEVER,       2, "HandleContactDetailChangedOpcode")
+        new OpcodeDetail /* 0x1B */ ("CMSG_PSM_CHANGED",             false, SessionStatus.NEVER,       0, null                              ),
+        new OpcodeDetail /* 0x1C */ ("SMSG_PSM_CHANGED",             true,  SessionStatus.READY,       2, "HandleContactDetailChangedOpcode"),
+        new OpcodeDetail /* 0x1D */ ("CMSG_CREATE_ROOM",             false, SessionStatus.NEVER,       0, null                              ),
+        new OpcodeDetail /* 0x1E */ ("SMSG_CREATE_ROOM_FAILED",      false, SessionStatus.READY,       0, "HandleCreateRoomFailOpcode"      ),
+        new OpcodeDetail /* 0x1F */ ("CMSG_JOIN_ROOM",               false, SessionStatus.NEVER,       0, null                              ),
+        new OpcodeDetail /* 0x20 */ ("CMSG_LEAVE_ROOM",              false, SessionStatus.NEVER,       0, null                              ),
+        new OpcodeDetail /* 0x21 */ ("SMSG_JOIN_ROOM",               true,  SessionStatus.READY,       2, "HandleJoinRoomOpcode"            ),
+        new OpcodeDetail /* 0x22 */ ("SMSG_LEAVE_ROOM",              true,  SessionStatus.READY,       2, "HandleLeaveRoomOpcode"           ),
+        new OpcodeDetail /* 0x23 */ ("SMSG_JOIN_ROOM_SUCCESS",       true,  SessionStatus.READY,       2, "HandleJoinRoomSuccessOpcode"     ),
+        new OpcodeDetail /* 0x24 */ ("SMSG_LEAVE_ROOM_SUCCESS",      true,  SessionStatus.READY,       1, "HandleLeaveRoomSuccessOpcode"    ),
+        new OpcodeDetail /* 0x25 */ ("CMSG_ROOM_CHAT",               false, SessionStatus.NEVER,       0, null                              ),
+        new OpcodeDetail /* 0x26 */ ("SMSG_ROOM_CHAT",               true,  SessionStatus.READY,       3, "HandleRoomChatOpcode"            ),
+        new OpcodeDetail /* 0x27 */ ("SMSG_ROOM_NOT_FOUND",          true,  SessionStatus.READY,       1, "HandleRoomNotFoundOpcode"        ),
+        new OpcodeDetail /* 0x28 */ ("SMSG_WRONG_ROOM_PASSWORD",     true,  SessionStatus.READY,       1, "HandleWrongRoomPasswordOpcode"   ),
+        new OpcodeDetail /* 0x29 */ ("SMSG_ROOM_MEMBER_DETAIL",      true,  SessionStatus.READY,       2, "HandleRoomMemberDetailOpcode"    ),
+        new OpcodeDetail /* 0x2A */ ("SMSG_ALREADY_IN_ROOM",         true,  SessionStatus.READY,       1, "HandleAlreadyInRoomOpcode"       )
     };
     
     final class OpcodeDetail

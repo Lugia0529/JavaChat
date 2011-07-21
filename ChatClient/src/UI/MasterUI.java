@@ -46,6 +46,9 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -56,6 +59,14 @@ public class MasterUI extends JFrame implements Opcode
 {
     private static JPanel loginPanel;
     private static JPanel contactPanel;
+    
+    /* Menu */
+    private static JMenuBar menuBar;
+    
+    private JMenu roomMenu;
+    
+    private JMenuItem miRoomJoin;
+    private JMenuItem miRoomCreate;
     
     private static boolean isLoginUI;
     
@@ -102,6 +113,16 @@ public class MasterUI extends JFrame implements Opcode
         
         loginPanel = new JPanel(null);
         contactPanel = new JPanel(null);
+        
+        miRoomJoin = new JMenuItem("Join An Existing Room");
+        miRoomCreate = new JMenuItem("Create Room");
+        
+        roomMenu = new JMenu("Room");
+        roomMenu.add(miRoomJoin);
+        roomMenu.add(miRoomCreate);
+        
+        menuBar = new JMenuBar();
+        menuBar.add(roomMenu);
         
         /* Login UI */
         lblUsername = new JLabel("Username");
@@ -177,10 +198,14 @@ public class MasterUI extends JFrame implements Opcode
         txtTitle.setVisible(false);
         txtPSM.setVisible(false);
         
+        miRoomJoin.setEnabled(false);
+        miRoomCreate.setEnabled(false);
+        
         add(loginPanel);
         add(contactPanel);
         
-        setSize(270, 500);
+        setJMenuBar(menuBar);
+        setSize(270, 520);
         setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -191,6 +216,9 @@ public class MasterUI extends JFrame implements Opcode
         btnExit.addActionListener(actListener);
         btnAddContact.addActionListener(actListener);
         btnRemoveContact.addActionListener(actListener);
+        
+        miRoomJoin.addActionListener(menuListener);
+        miRoomCreate.addActionListener(menuListener);
         
         txtTitle.addFocusListener(focusListener);
         txtPSM.addFocusListener(focusListener);
@@ -326,6 +354,12 @@ public class MasterUI extends JFrame implements Opcode
         }
     }
     
+    public void enableRoomMenu(boolean enable)
+    {
+        miRoomJoin.setEnabled(enable);
+        miRoomCreate.setEnabled(enable);
+    }
+    
     ActionListener actListener = new ActionListener()
     {
         public void actionPerformed(ActionEvent e)
@@ -385,6 +419,18 @@ public class MasterUI extends JFrame implements Opcode
                 else
                     NetworkManager.SendPacket(new Packet(CMSG_LOGOUT));
             }
+        }
+    };
+    
+    ActionListener menuListener = new ActionListener()
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            if (e.getSource().equals(miRoomJoin))
+                new RoomFormUI(RoomFormUI.JOIN_ROOM);
+            
+            if (e.getSource().equals(miRoomCreate))
+                new RoomFormUI(RoomFormUI.CREATE_ROOM);
         }
     };
     
@@ -567,6 +613,7 @@ public class MasterUI extends JFrame implements Opcode
             }
             
             UICore.getMasterUI().resetUI();
+            UICore.getMasterUI().enableRoomMenu(isLoginUI); // inverse logic, switch from login to contact = true, switch from contact to login = false.
             
             isLoginUI = !isLoginUI;
         }

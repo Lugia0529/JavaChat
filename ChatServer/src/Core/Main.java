@@ -31,6 +31,7 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
 public class Main implements Opcode
 {
     public static ClientList clientList;
+    public static RoomList roomList;
     public static ServerSocket serverSocket;
     public static Socket connectionSocket;
     public static Database db;
@@ -41,6 +42,7 @@ public class Main implements Opcode
         try
         {
             clientList = new ClientList();
+            roomList = new RoomList();
             
             System.out.printf("Lugia Chat Server Beta\n\n");
             

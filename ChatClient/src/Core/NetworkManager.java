@@ -120,6 +120,7 @@ public class NetworkManager implements Opcode
         
         UICore.switchUI();
         UICore.getChatUIList().disposeAllUI();
+        UICore.getRoomChatUIList().disposeAllUI();
         UICore.getMasterUI().setTitle("Login");
         UICore.getMasterUI().enableLoginInput(true);
         UICore.getMasterUI().clearAccountDetail();
